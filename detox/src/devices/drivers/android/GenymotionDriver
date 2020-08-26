@@ -1,0 +1,43 @@
+const AndroidDriver = require('./AndroidDriver');
+const environment = require('../../../utils/environment');
+
+class GenymotionDriver extends AndroidDriver {
+  constructor(config) {
+    super(config);
+
+    this.deviceRegistry = new DeviceRegistry({
+      lockfilePath: environment.getDeviceLockFilePathAndroid(),
+    });
+
+    this._name = 'Unspecified Genymotion';
+  }
+
+  get name() {
+    return this._name
+  }
+
+  async acquireFreeDevice(deviceQuery) {
+    gmsaas instances list
+  }
+
+  async _boot(avdName, adbName) {
+    gmsaas recipes list
+    gmsaas instances start <recipe_uuid> <name>
+    gmsaas instances adbconnect [--adb-serial-port PORT] <instance_uuid>
+  }
+
+  async _waitForBootToComplete(deviceId) {
+
+  }
+
+  async cleanup(adbName, bundleId) {
+
+  }
+
+  async shutdown(deviceId) {
+    gmsaas instances stop <instance_uuid>
+  }
+}
+
+
+module.exports = GenymotionDriver;
