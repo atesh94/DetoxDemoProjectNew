@@ -47,6 +47,6 @@ Provide the device and verbose Detox logs so we can understand what happened.
  - Node:
  - Device:
  - OS: 
- - Test-runner (select one): `jest-circus` | `jest-jasmine2` (deprecated) | `mocha`
+ - Test-runner (select one): `jest-circus` | `mocha`
 
 <!-- Note: Test-runner is set in Detox.test-runner in your package.json -->
