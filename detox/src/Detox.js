@@ -59,9 +59,11 @@ class Detox {
         'launchApp',
         'appReady',
         'createExternalArtifact',
+        'logEvent',
       ],
       onError: this._onEmitError.bind(this),
     });
+    logger.attachEventEmitter(this._eventEmitter);
 
     this.device = null;
   }

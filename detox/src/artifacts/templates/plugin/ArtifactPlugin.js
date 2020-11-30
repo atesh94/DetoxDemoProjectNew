@@ -1,5 +1,5 @@
 const _ = require('lodash');
-const log = require('../../../utils/logger').child({ __filename });
+const log = require('../../../utils/logger').silent().child({ __filename });
 
 /***
  * Almost non-opinionated building block for any artifact type
@@ -281,6 +281,18 @@ class ArtifactPlugin {
     this.context.testSummary = null;
     this._finishedTests = true;
     this._logDisableWarning();
+  }
+
+  /***
+   * Hook that is called whenever the system's logger is invoked.
+   * @param logRecord The record associated with the log. Typically, the actual event-name associated with log
+   *          is available via logRecord.event.
+   * @returns {Promise<void>} - when done
+   */
+  async onLogEvent(logRecord) {
+    if (logRecord.event === 'EMU_BIN_VERSION_DETECT') {
+      _.noop();
+    }
   }
 
   /**

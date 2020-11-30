@@ -1,3 +1,4 @@
+const _ =  require('lodash');
 const fs = require('fs-extra');
 const onExit = require('signal-exit');
 const path = require('path');
@@ -6,6 +7,18 @@ const bunyanDebugStream = require('bunyan-debug-stream');
 const argparse = require('./argparse');
 const temporaryPath = require('../artifacts/utils/temporaryPath');
 const customConsoleLogger = require('./customConsoleLogger');
+
+class LogEventEmitter {
+  constructor() {
+    this.emitter = {
+      emit: _.noop,
+    };
+  }
+
+  write(record) {
+    this.emitter.emit('logEvent', record);
+  }
+}
 
 function adaptLogLevelName(level) {
   switch (level) {
@@ -102,10 +115,22 @@ function init() {
     });
   }
 
+  const silentBunyanStreams = [...bunyanStreams];
+  const logEventsEmitter = new LogEventEmitter();
+  bunyanStreams.push({
+    level: 'trace',
+    type: 'raw',
+    stream: logEventsEmitter,
+  });
+
   const logger = bunyan.createLogger({
     name: 'detox',
     streams: bunyanStreams,
   });
+  const silentLogger = bunyan.createLogger({
+    name: 'detox',
+    streams: silentBunyanStreams,
+  })
 
   if (jsonFileStreamPath) {
     logger.jsonFileStreamPath = jsonFileStreamPath;
@@ -128,6 +153,14 @@ function init() {
 
     tryOverrideConsole(logger, global);
   };
+
+  logger.attachEventEmitter = (eventEmitter) => {
+    logEventsEmitter.emitter = eventEmitter;
+  }
+
+  logger.silent = () => {
+    return silentLogger;
+  }
 
   return logger;
 }

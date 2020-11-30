@@ -3,7 +3,7 @@ const fs = require('fs-extra');
 const path = require('path');
 const util = require('util');
 const FileArtifact = require('./templates/artifact/FileArtifact');
-const log = require('../utils/logger').child({ __filename });
+const log = require('../utils/logger').silent().child({ __filename });
 
 class ArtifactsManager {
   constructor({ pathBuilder, plugins }) {
@@ -78,6 +78,7 @@ class ArtifactsManager {
     deviceEmitter.on('beforeTerminateApp', this.onBeforeTerminateApp.bind(this));
     deviceEmitter.on('terminateApp', this.onTerminateApp.bind(this));
     deviceEmitter.on('createExternalArtifact', this.onCreateExternalArtifact.bind(this));
+    deviceEmitter.on('logEvent', this.onLogEvent.bind(this));
   }
 
   async onBootDevice(deviceInfo) {
@@ -121,6 +122,10 @@ class ArtifactsManager {
       artifact: new FileArtifact({ temporaryPath: artifactPath }),
       name: artifactName,
     });
+  }
+
+  async onLogEvent(logRecord) {
+    await this._callPlugins('plain', 'onLogEvent', logRecord);
   }
 
   async onRunStart() {}
