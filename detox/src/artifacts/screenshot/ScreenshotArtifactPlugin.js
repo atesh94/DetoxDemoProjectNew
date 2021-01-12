@@ -17,13 +17,13 @@ class ScreenshotArtifactPlugin extends TwoSnapshotsPerTestPlugin {
     return this.api.preparePathForArtifact(`${name}.png`, testSummary);
   }
 
-  async onBeforeCleanup(e) {
+  async onBeforeCleanup() {
     if (this.context.isAppReady === false) {
       this._hasFailingTests = true;
       await this._takeAutomaticSnapshot('appNotReady');
     }
 
-    await super.onBeforeCleanup(e);
+    await super.onBeforeCleanup();
   }
 
   /** @param {string} config */

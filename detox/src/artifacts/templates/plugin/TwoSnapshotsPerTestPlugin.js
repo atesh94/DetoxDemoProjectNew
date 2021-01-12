@@ -12,12 +12,14 @@ class TwoSnapshotsPerTestPlugin extends ArtifactPlugin {
 
     this.takeAutomaticSnapshots = this.api.userConfig.takeWhen
       ? {
+        appNotReady: true,
         testStart: false,
         testFailure: true,
         testDone: false,
         ...this.api.userConfig.takeWhen
       }
       : {
+        appNotReady: true,
         testStart: true,
         testFailure: true,
         testDone: true
