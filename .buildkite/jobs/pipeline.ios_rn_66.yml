@@ -6,7 +6,7 @@
     env:
       REACT_NATIVE_VERSION: 0.66.1
     artifact_paths:
-      - "/Users/builder/work/coverage/**/*.lcov"
-      - "/Users/builder/work/artifacts*.tar.gz"
+      - "coverage/**/*.lcov"
+      - "artifacts*.tar.gz"
     agents:
       queue: testing
