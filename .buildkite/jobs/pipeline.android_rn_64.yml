@@ -8,5 +8,7 @@
       DETOX_DISABLE_POD_INSTALL: true
       DETOX_DISABLE_POSTINSTALL: true
     artifact_paths:
-      - "/Users/builder/work/coverage/**/*.lcov"
-      - "/Users/builder/work/artifacts*.tar.gz"
+      - "*.lcov"
+      - "artifacts*.tar.gz"
+    queue:
+      testing: true
