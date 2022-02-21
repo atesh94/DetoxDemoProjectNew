@@ -10,5 +10,4 @@
     artifact_paths:
       - "*.lcov"
       - "artifacts*.tar.gz"
-    queue:
-      testing: true
+
