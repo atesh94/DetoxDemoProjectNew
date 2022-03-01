@@ -52,11 +52,15 @@ function getVersionSafe() {
 }
 
 function releaseNpmTag() {
+  console.log(`RELEASE_NPM_TAG is ${RELEASE_NPM_TAG}`);
   if (RELEASE_NPM_TAG !== 'null') {
+    console.log('returning tag');
     return RELEASE_NPM_TAG;
   } else if (BRANCH === 'master') {
+    console.log('returning tag');
     return 'latest';
   } else {
+    console.log('returning tag');
     return BRANCH;
   }
 }

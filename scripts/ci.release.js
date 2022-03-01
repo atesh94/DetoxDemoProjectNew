@@ -56,6 +56,7 @@ function versionTagAndPublish() {
 
 	if (isRelease) {
 		const publishNewVersion = require('./ci.publish');
+		console.log(`version is ${packageVersion} and tag is ${releaseNpmTag()}`);
 		publishNewVersion(packageVersion, releaseNpmTag());
 	} else {
 		// Disabled for the time being
