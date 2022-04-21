@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const DetoxRuntimeError = require('../../../src/errors/DetoxRuntimeError');
+const DetoxRuntimeError = require('../../../../src/errors/DetoxRuntimeError');
 
 function assertJestCircus26(config) {
   if (!/jest-circus/.test(config.testRunner)) {

@@ -6,14 +6,11 @@ const whichSync = require('which').sync;
 const unparse = require('yargs-unparser');
 
 const { composeDetoxConfig } = require('../src/configuration');
-const DeviceRegistry = require('../src/devices/DeviceRegistry');
-const GenyDeviceRegistryFactory = require('../src/devices/allocation/drivers/android/genycloud/GenyDeviceRegistryFactory');
-const { loadLastFailedTests, resetLastFailedTests } = require('../src/utils/lastFailedTests');
+const { loadLastFailedTests } = require('../src/utils/lastFailedTests');
 const log = require('../src/utils/logger').child({ __filename });
 const { parse, quote } = require('../src/utils/shellQuote');
 
-const { readJestConfig } = require('./utils/jestInternals');
-const { getPlatformSpecificString, printEnvironmentVariables } = require('./utils/misc');
+const { printEnvironmentVariables } = require('./utils/misc');
 const { prependNodeModulesBinToPATH } = require('./utils/misc');
 const splitArgv = require('./utils/splitArgv');
 const { DETOX_ARGV_OVERRIDE_NOTICE, DEVICE_LAUNCH_ARGS_DEPRECATION } = require('./utils/warnings');
@@ -23,15 +20,12 @@ module.exports.desc = 'Run your test suite with the test runner specified in pac
 module.exports.builder = require('./utils/testCommandArgs');
 module.exports.handler = async function test(argv) {
   const { detoxArgs, runnerArgs } = splitArgv.detox(argv);
-  const { cliConfig, deviceConfig, runnerConfig } = await composeDetoxConfig({ argv: detoxArgs });
-  const [platform] = deviceConfig.type.split('.');
+  const { cliConfig, runnerConfig } = await composeDetoxConfig({ argv: detoxArgs });
 
   const forwardedArgs = await prepareArgs({
     cliConfig,
-    deviceConfig,
     runnerConfig,
     runnerArgs,
-    platform,
   });
 
   if (detoxArgs['inspect-brk']) {
@@ -45,9 +39,7 @@ module.exports.handler = async function test(argv) {
   }
 
   await runTestRunnerWithRetries(forwardedArgs, {
-    keepLockFile: cliConfig.keepLockFile,
     retries: detoxArgs.retries,
-    platform,
   });
 };
 
@@ -74,20 +66,16 @@ module.exports.middlewares = [
   }
 ];
 
-async function prepareArgs({ cliConfig, deviceConfig, runnerArgs, runnerConfig, platform }) {
+async function prepareArgs({ cliConfig, runnerArgs, runnerConfig }) {
   const { specs, passthrough } = splitArgv.jest(runnerArgs);
-  const platformFilter = getPlatformSpecificString(platform);
 
   const argv = _.omitBy({
     color: !cliConfig.noColor && undefined,
     config: runnerConfig.runnerConfig /* istanbul ignore next */ || undefined,
-    testNamePattern: platformFilter ? `^((?!${platformFilter}).)*$` : undefined,
     maxWorkers: cliConfig.workers || undefined,
 
     ...passthrough,
   }, _.isUndefined);
-
-  const hasMultipleWorkers = (await readJestConfig(argv)).globalConfig.maxWorkers > 1;
 
   return {
     argv,
@@ -102,37 +90,23 @@ async function prepareArgs({ cliConfig, deviceConfig, runnerArgs, runnerConfig, 
       DETOX_DEBUG_SYNCHRONIZATION: cliConfig.debugSynchronization,
       DETOX_DEVICE_BOOT_ARGS: cliConfig.deviceBootArgs,
       DETOX_DEVICE_NAME: cliConfig.deviceName,
-      DETOX_FORCE_ADB_INSTALL: platform === 'android' ? cliConfig.forceAdbInstall : undefined,
+      DETOX_FORCE_ADB_INSTALL: cliConfig.forceAdbInstall,
       DETOX_GPU: cliConfig.gpu,
       DETOX_HEADLESS: cliConfig.headless,
       DETOX_LOGLEVEL: cliConfig.loglevel,
-      DETOX_READ_ONLY_EMU: deviceConfig.type === 'android.emulator' && hasMultipleWorkers ? true : undefined,
+      DETOX_READ_ONLY_EMU: cliConfig.readonlyEmu,
       DETOX_RECORD_LOGS: cliConfig.recordLogs,
       DETOX_RECORD_PERFORMANCE: cliConfig.recordPerformance,
       DETOX_RECORD_TIMELINE: cliConfig.recordTimeline,
       DETOX_RECORD_VIDEOS: cliConfig.recordVideos,
-      DETOX_REPORT_SPECS: _.isUndefined(cliConfig.jestReportSpecs)
-        ? !hasMultipleWorkers
-        : `${cliConfig.jestReportSpecs}` === 'true',
+      DETOX_REPORT_SPECS: cliConfig.jestReportSpecs,
       DETOX_REUSE: cliConfig.reuse,
-      DETOX_START_TIMESTAMP: Date.now(),
       DETOX_TAKE_SCREENSHOTS: cliConfig.takeScreenshots,
       DETOX_USE_CUSTOM_LOGGER: cliConfig.useCustomLogger,
     }, _.isUndefined),
 
     specs: _.isEmpty(specs) && runnerConfig.specs ? [runnerConfig.specs] : specs,
   };
-}
-
-async function resetLockFile({ platform }) {
-  if (platform === 'ios') {
-    await DeviceRegistry.forIOS().reset();
-  }
-
-  if (platform === 'android') {
-    await DeviceRegistry.forAndroid().reset();
-    await GenyDeviceRegistryFactory.forGlobalShutdown().reset();
-  }
 }
 
 function launchTestRunner({ argv, env, specs }) {
@@ -170,17 +144,12 @@ async function runTestRunnerWithRetries(forwardedArgs, { keepLockFile, platform,
         );
       }
 
-      if (!keepLockFile) {
-        await resetLockFile({ platform });
-      }
-
-      await resetLastFailedTests();
       launchTestRunner(forwardedArgs);
       launchError = null;
     } catch (e) {
       launchError = e;
 
-      const lastFailedTests = await loadLastFailedTests();
+      const lastFailedTests = await loadLastFailedTests(); // TODO: retrieve from __top IPC
       if (_.isEmpty(lastFailedTests)) {
         throw e;
       }

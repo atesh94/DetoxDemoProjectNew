@@ -1,7 +1,9 @@
+// @ts-nocheck
 const { VerboseReporter: JestVerboseReporter } = require('@jest/reporters'); // eslint-disable-line node/no-extraneous-require
 
 const DetoxRuntimeError = require('../../../src/errors/DetoxRuntimeError');
 
+// TODO: remove this since Jest 27.2.5 already fixes this problem
 class DetoxStreamlineJestReporter extends JestVerboseReporter {
 
   constructor(globalConfig) {

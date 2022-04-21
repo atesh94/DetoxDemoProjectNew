@@ -426,18 +426,7 @@ Detox can either initialize a server using a generated configuration, or can be 
 }
 ```
 
-When you define a session config, the Detox server won’t start automatically anymore — it is assumed that
-you will be running it independently via `detox run-server` CLI command. Alternatively, you can set the
-`autoStart` property to be explicitly `true`:
-
-```diff
-   "session": {
-+    "autoStart": true,
-     "server": "ws://localhost:8099",
-     "sessionId": "YourProjectSessionId"
-```
-
-Defining an explicit session config with `server` and `sessionId` also means you cannot use multiple workers,
+Defining an explicit session config with the same `sessionId` also means you cannot use multiple workers,
 since the specified port will become busy for any test worker next to the first one to occupy it.
 
 Session can be set also per device configuration — then it takes a higher priority over the global

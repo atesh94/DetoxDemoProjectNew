@@ -1,11 +1,13 @@
 // @ts-nocheck
 const NodeEnvironment = require('jest-environment-node');
 
-const DetoxError = require('../../src/errors/DetoxError');
-const Timer = require('../../src/utils/Timer');
+const DetoxWorkerContext = require('../context/DetoxWorkerContext');
+const { DetoxError } = require('../../../src/errors');
+const ipcClient = require('../../../src/ipc/client');
 
 const DetoxCoreListener = require('./listeners/DetoxCoreListener');
 const DetoxInitErrorListener = require('./listeners/DetoxInitErrorListener');
+const Timer = require('../../../src/artifacts/utils/Timer');
 const assertExistingContext = require('./utils/assertExistingContext');
 const assertJestCircus26 = require('./utils/assertJestCircus26');
 const wrapErrorWithNoopLifecycle = require('./utils/wrapErrorWithNoopLifecycle');
@@ -46,10 +48,11 @@ class DetoxCircusEnvironment extends NodeEnvironment {
 
   async setup() {
     await super.setup();
+    await ipcClient.init({});
+    const detoxConfig = await ipcClient.getDetoxConfig();
 
-    this.global.detox = require('../../src')
-      ._setGlobal(this.global)
-      ._suppressLoggingInitErrors();
+    DetoxWorkerContext.global = this.global;
+    this.global.detox = new DetoxWorkerContext(detoxConfig);
   }
 
   async teardown() {
@@ -178,7 +181,7 @@ class DetoxCircusEnvironment extends NodeEnvironment {
 
   /** @private */
   get _logger() {
-    return require('../../src/utils/logger');
+    return require('../../../src/utils/logger');
   }
 
   /** @private */

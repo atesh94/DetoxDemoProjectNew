@@ -66,7 +66,6 @@ parameters to disable various side effects and make life easier when debugging:
      "launchApp": "manual"
    },
 +  "session": {
-+    "autoStart": true,
 +    "debugSynchronization": 0,
 +    "server": "ws://localhost:8099",
 +    "sessionId": "test"

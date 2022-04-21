@@ -8,6 +8,7 @@ class DetoxReporter extends DetoxStreamlineJestReporter {
   }
 
   async onRunComplete(contexts, results) {
+    // @ts-ignore
     await super.onRunComplete(contexts, results);
     await this._failingTestsReporter.onRunComplete(contexts, results);
   }
