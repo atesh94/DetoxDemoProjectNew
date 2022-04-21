@@ -43,16 +43,11 @@ async function composeSessionConfig(options) {
   }
 
   const result = {
-    autoStart: !session.server,
     sessionId: uuid.UUID(),
     debugSynchronization: 10000,
 
     ...session,
   };
-
-  if (!result.server && !result.autoStart) {
-    throw errorComposer.cannotSkipAutostartWithMissingServer();
-  }
 
   return result;
 }

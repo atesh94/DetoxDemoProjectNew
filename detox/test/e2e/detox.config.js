@@ -169,7 +169,6 @@ const config = {
         launchApp: 'manual'
       },
       session: {
-        autoStart: true,
         server: 'ws://localhost:8099',
         sessionId: 'com.wix.detox-example'
       }
@@ -182,7 +181,6 @@ const config = {
         launchApp: 'manual'
       },
       session: {
-        autoStart: true,
         server: 'ws://localhost:8099',
         sessionId: 'test'
       }

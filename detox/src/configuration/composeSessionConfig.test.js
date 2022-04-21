@@ -23,7 +23,6 @@ describe('composeSessionConfig', () => {
 
   it('should generate a default config', async () => {
     expect(await compose()).toEqual({
-      autoStart: true,
       debugSynchronization: 10000,
       server: undefined,
       sessionId: expect.any(String),
@@ -103,44 +102,6 @@ describe('composeSessionConfig', () => {
           expect(await compose()).toMatchObject({
             server: 'ws://otherserver:1100',
           });
-        });
-      });
-    });
-  });
-
-  describe('autoStart', function() {
-    describe('by default', () => {
-      it('should be true', async () => {
-        expect(await compose()).toMatchObject({ autoStart: true });
-      });
-    });
-
-    describe('when autoStart is explicitly false', function() {
-      beforeEach(() => {
-        globalConfig.session = { autoStart: false };
-      });
-
-      it('should throw an error if the server is not defined', async () => {
-        await expect(compose).rejects.toThrowError(errorComposer.cannotSkipAutostartWithMissingServer());
-      });
-    });
-
-    describe('when server is defined', () => {
-      beforeEach(() => {
-        globalConfig.session = { server: 'ws://localhost:1100' };
-      });
-
-      it('should be false', async () => {
-        expect(await compose()).toMatchObject({ autoStart: false });
-      });
-
-      describe('when autoStart is explicitly true', function() {
-        beforeEach(() => {
-          globalConfig.session.autoStart = true;
-        });
-
-        it('should override the value', async () => {
-          expect(await compose()).toMatchObject({ autoStart: true });
         });
       });
     });
