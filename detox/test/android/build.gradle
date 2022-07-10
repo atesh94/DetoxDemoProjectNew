@@ -20,6 +20,7 @@ buildscript {
         compileSdkVersion = 31
         targetSdkVersion = 31
         minSdkVersion = 21
+//        ndkVersion = '21.4.7075529'
 
         if (!rnInfo.isRN62OrHigher) {
             suppressUnitTests = true
@@ -35,6 +36,7 @@ buildscript {
 
     dependencies {
         classpath "com.android.tools.build:gradle:$androidGradlePluginVersion"
+        classpath 'com.facebook.react:react-native-gradle-plugin'
         classpath 'de.undercouch:gradle-download-task:4.1.2'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
 

@@ -68,29 +68,14 @@ const config = {
     'android.debug': {
       type: 'android.apk',
       name: 'example',
-      binaryPath: 'android/app/build/outputs/apk/fromBin/debug/app-fromBin-debug.apk',
-      build: 'cd android && ./gradlew assembleFromBinDebug assembleFromBinDebugAndroidTest -DtestBuildType=debug && cd ..',
+      binaryPath: 'android/app/build/outputs/apk/debug/app-debug.apk',
+      build: 'cd android && ./gradlew assembleDebug assembleDebugAndroidTest -DtestBuildType=debug && cd ..',
     },
 
     'android.debug.withArgs': {
       type: 'android.apk',
       name: 'exampleWithArgs',
-      binaryPath: 'android/app/build/outputs/apk/fromBin/debug/app-fromBin-debug.apk',
-      build: ':',
-      launchArgs,
-    },
-
-    'android.fromSource': {
-      type: 'android.apk',
-      name: 'example',
-      binaryPath: 'android/app/build/outputs/apk/fromSource/debug/app-fromSource-debug.apk',
-      build: 'cd android && ./gradlew assembleFromSourceDebug assembleFromSourceDebugAndroidTest -DtestBuildType=debug && cd ..',
-    },
-
-    'android.fromSource.withArgs': {
-      type: 'android.apk',
-      name: 'example',
-      binaryPath: 'android/app/build/outputs/apk/fromSource/debug/app-fromSource-debug.apk',
+      binaryPath: 'android/app/build/outputs/apk/debug/app-debug.apk',
       build: ':',
       launchArgs,
     },
@@ -98,14 +83,14 @@ const config = {
     'android.release': {
       type: 'android.apk',
       name: 'example',
-      binaryPath: 'android/app/build/outputs/apk/fromBin/release/app-fromBin-release.apk',
-      build: 'cd android && ./gradlew assembleFromBinRelease assembleFromBinReleaseAndroidTest -DtestBuildType=release && cd ..',
+      binaryPath: 'android/app/build/outputs/apk/release/app-release.apk',
+      build: 'cd android && ./gradlew assembleRelease assembleReleaseAndroidTest -DtestBuildType=release && cd ..',
     },
 
     'android.release.withArgs': {
       type: 'android.apk',
       name: 'exampleWithArgs',
-      binaryPath: 'android/app/build/outputs/apk/fromBin/release/app-fromBin-release.apk',
+      binaryPath: 'android/app/build/outputs/apk/release/app-elease.apk',
       build: ':',
       launchArgs,
     },
@@ -192,10 +177,6 @@ const config = {
     'android.emu.debug': {
       device: 'android.emulator',
       apps: ['android.debug', 'android.debug.withArgs'],
-    },
-    'android.emu.debug.fromSource': {
-      device: 'android.emulator',
-      apps: ['android.fromSource', 'android.fromSource.withArgs'],
     },
     'android.emu.release': {
       device: 'android.emulator',
