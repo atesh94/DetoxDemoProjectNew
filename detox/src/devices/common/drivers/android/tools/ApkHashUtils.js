@@ -5,32 +5,38 @@ const generateHash = require('../../../../../utils/generateHash');
 
 const { FILE_PATH } = require('./TempFileTransfer');
 
-const saveHashToDevice = async ({ tempFileTransfer, bundleId, deviceId, binaryPath }) => {
-  const hashFilename = _getHashFilename(bundleId);
-  await _createLocalHashFile(hashFilename, binaryPath);
-  await tempFileTransfer.prepareDestinationDir(deviceId);
-  await tempFileTransfer.send(deviceId, hashFilename, hashFilename);
-  _deleteLocalHashFile(hashFilename);
-};
+class ApkHashUtils {
+  constructor(props) {
+    this.adb = props.adb;
+  }
 
-const isHashUpdated = async ({ adb, deviceId, bundleId, binaryPath }) => {
-  const localHash = await generateHash(binaryPath);
-  const destinationPath = path.posix.join(FILE_PATH, _getHashFilename(bundleId));
-  const remoteHash = await adb.readFile(deviceId, destinationPath, true);
-  return localHash === remoteHash;
-};
+  async saveHashToDevice({ fileTransfer, bundleId, deviceId, binaryPath }) {
+    const hashFilename = this._getHashFilename(bundleId);
+    await this._createLocalHashFile(hashFilename, binaryPath);
+    await fileTransfer.prepareDestinationDir(deviceId);
+    await fileTransfer.send(deviceId, hashFilename, hashFilename);
+    this._deleteLocalHashFile(hashFilename);
+  }
 
-const _getHashFilename = (bundleId) => {
-  return `${bundleId}.hash`;
-};
+  async isHashUpToDate({ deviceId, bundleId, binaryPath }) {
+    const localHash = await generateHash(binaryPath);
+    const destinationPath = path.posix.join(FILE_PATH, this._getHashFilename(bundleId));
+    const remoteHash = await this.adb.readFile(deviceId, destinationPath, true);
+    return localHash === remoteHash;
+  }
 
-const _createLocalHashFile = async (hashFilename, binaryPath) => {
-  const hash = await generateHash(binaryPath);
-  fs.writeFileSync(hashFilename, hash);
-};
+  _getHashFilename(bundleId) {
+    return `${bundleId}.hash`;
+  }
 
-const _deleteLocalHashFile = (hashFilename) => {
-  fs.unlinkSync(hashFilename);
-};
+  async _createLocalHashFile(hashFilename, binaryPath) {
+    const hash = await generateHash(binaryPath);
+    fs.writeFileSync(hashFilename, hash);
+  }
 
-module.exports = { isHashUpdated, saveHashToDevice };
+  _deleteLocalHashFile(hashFilename) {
+    fs.unlinkSync(hashFilename);
+  }
+}
+
+module.exports = ApkHashUtils;

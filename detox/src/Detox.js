@@ -31,7 +31,7 @@ class Detox {
         maxArrayLength: Infinity,
         maxStringLength: Infinity,
         breakLength: false,
-        compact: false,
+        compact: false
       })
     );
 
@@ -44,7 +44,13 @@ class Detox {
     this[lifecycleSymbols.onTestStart] = this.beforeEach;
     this[lifecycleSymbols.onTestDone] = this.afterEach;
 
-    const { appsConfig, artifactsConfig, behaviorConfig, deviceConfig, sessionConfig } = config;
+    const {
+      appsConfig,
+      artifactsConfig,
+      behaviorConfig,
+      deviceConfig,
+      sessionConfig
+    } = config;
 
     this._appsConfig = appsConfig;
     this._artifactsConfig = artifactsConfig;
@@ -67,9 +73,9 @@ class Detox {
         'beforeLaunchApp',
         'launchApp',
         'appReady',
-        'createExternalArtifact',
+        'createExternalArtifact'
       ],
-      onError: this._onEmitError.bind(this),
+      onError: this._onEmitError.bind(this)
     });
 
     this.device = null;
@@ -125,7 +131,7 @@ class Detox {
     this._logTestRunCheckpoint('DETOX_BEFORE_EACH', testSummary);
     await this._dumpUnhandledErrorsIfAny({
       pendingRequests: false,
-      testName: testSummary.fullName,
+      testName: testSummary.fullName
     });
     await this._artifactsManager.onTestStart(testSummary);
   }
@@ -138,7 +144,7 @@ class Detox {
     await this._artifactsManager.onTestDone(testSummary);
     await this._dumpUnhandledErrorsIfAny({
       pendingRequests: testSummary.timedOut,
-      testName: testSummary.fullName,
+      testName: testSummary.fullName
     });
   }
 
@@ -151,7 +157,7 @@ class Detox {
         port: sessionConfig.server
           ? new URL(sessionConfig.server).port
           : 0,
-        standalone: false,
+        standalone: false
       });
 
       await this._server.open();
@@ -177,7 +183,7 @@ class Detox {
       deviceAllocatorFactory,
       artifactsManagerFactory,
       matchersFactory,
-      runtimeDeviceFactory,
+      runtimeDeviceFactory
     } = environmentFactory.createFactories(this._deviceConfig);
 
     const envValidator = envValidatorFactory.createValidator();
@@ -187,7 +193,7 @@ class Detox {
       invocationManager,
       client: this._client,
       eventEmitter: this._eventEmitter,
-      runtimeErrorComposer: this._runtimeErrorComposer,
+      runtimeErrorComposer: this._runtimeErrorComposer
     };
 
     this._artifactsManager = artifactsManagerFactory.createArtifactsManager(this._artifactsConfig, commonDeps);
@@ -202,21 +208,21 @@ class Detox {
         appsConfig: this._appsConfig,
         behaviorConfig: this._behaviorConfig,
         deviceConfig: this._deviceConfig,
-        sessionConfig,
+        sessionConfig
       });
     await this.device._prepare();
 
     const matchers = matchersFactory.createMatchers({
       invocationManager,
       runtimeDevice: this.device,
-      eventEmitter: this._eventEmitter,
+      eventEmitter: this._eventEmitter
     });
     Object.assign(this, matchers);
 
     if (behaviorConfig.exposeGlobals) {
       Object.assign(Detox.global, {
         ...matchers,
-        device: this.device,
+        device: this.device
       });
     }
 
@@ -248,9 +254,23 @@ class Detox {
       .map(0)
       .value();
 
-    for (const appName of appNames) {
-      await this.device.selectApp(appName);
-      await this.device.resetAppState();
+    if (this._behaviorConfig.optimizeAppInstall) {
+      for (const appName of appNames) {
+        await this.device.selectApp(appName);
+        await this.device.resetAppState();
+      }
+    } else {
+      // NOTE: the separation between uninstall and install is made on
+      // purpose to prevent https://github.com/wix/Detox/pull/3435
+      for (const appName of appNames) {
+        await this.device.selectApp(appName);
+        await this.device.uninstallApp();
+      }
+
+      for (const appName of appNames) {
+        await this.device.selectApp(appName);
+        await this.device.installApp();
+      }
     }
 
     if (appNames.length !== 1) {

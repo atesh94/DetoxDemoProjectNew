@@ -15,13 +15,12 @@ describe('Android driver', () => {
   let adb;
   let aapt;
   let apkValidator;
-  let tempFileTransfer;
+  let fileTransfer;
   let appInstallHelper;
   let appUninstallHelper;
   let instrumentation;
   let DeviceRegistryClass;
-  let saveHashToDeviceMock;
-  let isHashUpdatedMock;
+  let apkHashUtils;
 
   let uut;
   beforeEach(() => {
@@ -36,10 +35,11 @@ describe('Android driver', () => {
       adb,
       aapt,
       apkValidator,
-      tempFileTransfer,
+      fileTransfer,
       appInstallHelper,
       appUninstallHelper,
-      instrumentation
+      instrumentation,
+      apkHashUtils
     }, { adbName });
   });
 
@@ -214,21 +214,21 @@ describe('Android driver', () => {
     describe('in app launch (with dedicated arg)', () => {
       it('should prepare the device for receiving notification data file', async () => {
         await uut.launchApp(bundleId, notificationArgs, '');
-        expect(tempFileTransfer.prepareDestinationDir).toHaveBeenCalledWith(adbName);
+        expect(fileTransfer.prepareDestinationDir).toHaveBeenCalledWith(adbName);
       });
 
       it('should transfer the notification data file to the device', async () => {
         await uut.launchApp(bundleId, notificationArgs, '');
-        expect(tempFileTransfer.send).toHaveBeenCalledWith(adbName, notificationArgs.detoxUserNotificationDataURL, 'notification.json');
+        expect(fileTransfer.send).toHaveBeenCalledWith(adbName, notificationArgs.detoxUserNotificationDataURL, 'notification.json');
       });
 
       it('should not send the data if device prep fails', async () => {
-        tempFileTransfer.prepareDestinationDir.mockRejectedValue(new Error());
+        fileTransfer.prepareDestinationDir.mockRejectedValue(new Error());
         await expect(uut.launchApp(bundleId, notificationArgs, '')).rejects.toThrowError();
       });
 
       it('should launch instrumentation with a modified notification data URL arg', async () => {
-        tempFileTransfer.send.mockReturnValue(mockNotificationDataTargetPath);
+        fileTransfer.send.mockReturnValue(mockNotificationDataTargetPath);
 
         await uut.launchApp(bundleId, notificationArgs, '');
 
@@ -253,8 +253,8 @@ describe('Android driver', () => {
         it('should pre-transfer notification data to device', async () => {
           await spec.applyFn();
 
-          expect(tempFileTransfer.prepareDestinationDir).toHaveBeenCalledWith(adbName);
-          expect(tempFileTransfer.send).toHaveBeenCalledWith(adbName, notificationArgs.detoxUserNotificationDataURL, 'notification.json');
+          expect(fileTransfer.prepareDestinationDir).toHaveBeenCalledWith(adbName);
+          expect(fileTransfer.send).toHaveBeenCalledWith(adbName, notificationArgs.detoxUserNotificationDataURL, 'notification.json');
         });
 
         it('should start the app with notification data using invocation-manager', async () => {
@@ -278,7 +278,7 @@ describe('Android driver', () => {
         await uut.launchApp(bundleId, {}, '');
         await uut.deliverPayload(notificationArgsDelayed);
 
-        expect(tempFileTransfer.send).not.toHaveBeenCalled();
+        expect(fileTransfer.send).not.toHaveBeenCalled();
       });
 
       it('should not start the app using invocation-manager', async () => {
@@ -566,10 +566,10 @@ describe('Android driver', () => {
     const ApkValidator = require('../../../common/drivers/android/tools/ApkValidator');
     apkValidator = new ApkValidator();
 
-    jest.mock('../../../common/drivers/android/tools/TempFileTransfer');
-    const { TempFileTransfer } = require('../../../common/drivers/android/tools/TempFileTransfer');
-    tempFileTransfer = new TempFileTransfer(adb);
-    tempFileTransfer.send.mockResolvedValue(mockNotificationDataTargetPath);
+    jest.mock('../../../common/drivers/android/tools/fileTransfer');
+    const FileTransfer = require('../../../common/drivers/android/tools/FileTransfer');
+    fileTransfer = new FileTransfer(adb, 'mockFilePath');
+    fileTransfer.send.mockResolvedValue(mockNotificationDataTargetPath);
 
     jest.mock('../../../common/drivers/android/tools/AppInstallHelper');
     const AppInstallHelper = require('../../../common/drivers/android/tools/AppInstallHelper');
@@ -585,9 +585,8 @@ describe('Android driver', () => {
     DeviceRegistryClass.forIOS = DeviceRegistryClass.forAndroid = createRegistry;
 
     jest.mock('../../../common/drivers/android/tools/ApkHashUtils');
-    const { isHashUpdated, saveHashToDevice } = require('../../../common/drivers/android/tools/ApkHashUtils');
-    saveHashToDeviceMock = saveHashToDevice;
-    isHashUpdatedMock = isHashUpdated;
+    const ApkHashUtils = require('../../../common/drivers/android/tools/ApkHashUtils');
+    apkHashUtils = new ApkHashUtils({ adb });
   };
 
   const mockGetAbsoluteBinaryPathImpl = (x) => `absolutePathOf(${x})`;
@@ -605,7 +604,7 @@ describe('Android driver', () => {
       fs.existsSync.mockReturnValue(true);
       generateHash.mockImplementation(async () => mockHash);
       adb.isPackageInstalled.mockImplementation(() => true);
-      isHashUpdatedMock.mockImplementation(() => false);
+      apkHashUtils.isHashUpToDate.mockImplementation(() => false);
     });
 
     it('should call isPackageInstalled when resetting state', async () => {
@@ -616,7 +615,7 @@ describe('Android driver', () => {
 
     describe('same app already installed', function() {
       beforeEach(() => {
-        isHashUpdatedMock.mockImplementation(() => true);
+        apkHashUtils.isHashUpToDate.mockImplementation(() => true);
         adb.isPackageInstalled.mockImplementation(() => true);
       });
 
@@ -636,7 +635,7 @@ describe('Android driver', () => {
       const mockTestBinaryPath = mockGetAbsoluteBinaryPathImpl(testBinaryPath);
 
       beforeEach(() => {
-        isHashUpdatedMock.mockImplementation(() => false);
+        apkHashUtils.isHashUpToDate.mockImplementation(() => false);
         adb.isPackageInstalled.mockImplementation(() => false);
       });
 
@@ -658,8 +657,8 @@ describe('Android driver', () => {
       it('should save hash to device', async () => {
         await uut.optimizedInstallApp(bundleId, binaryPath, testBinaryPath);
 
-        expect(saveHashToDeviceMock).toHaveBeenCalledTimes(1);
-        expect(saveHashToDeviceMock).toHaveBeenCalledWith({ tempFileTransfer, deviceId: adbName, bundleId, binaryPath });
+        expect(apkHashUtils.saveHashToDevice).toHaveBeenCalledTimes(1);
+        expect(apkHashUtils.saveHashToDevice).toHaveBeenCalledWith({ fileTransfer, deviceId: adbName, bundleId, binaryPath });
       });
     });
   });

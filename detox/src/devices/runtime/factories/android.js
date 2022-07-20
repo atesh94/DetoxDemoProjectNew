@@ -6,9 +6,10 @@ class RuntimeDriverFactoryAndroid extends RuntimeDeviceFactory {
     const adb = serviceLocator.adb;
     const aapt = serviceLocator.aapt;
     const apkValidator = serviceLocator.apkValidator;
-    const tempFileTransfer = serviceLocator.tempFileTransfer;
+    const fileTransfer = serviceLocator.fileTransfer;
     const devicePathBuilder = serviceLocator.devicePathBuilder;
 
+    const ApkHashUtils = require('../../common/drivers/android/tools/ApkHashUtils');
     const AppInstallHelper = require('../../common/drivers/android/tools/AppInstallHelper');
     const AppUninstallHelper = require('../../common/drivers/android/tools/AppUninstallHelper');
     const MonitoredInstrumentation = require('../../common/drivers/android/tools/MonitoredInstrumentation');
@@ -19,11 +20,12 @@ class RuntimeDriverFactoryAndroid extends RuntimeDeviceFactory {
       adb,
       aapt,
       apkValidator,
-      tempFileTransfer,
+      fileTransfer,
       devicePathBuilder,
-      appInstallHelper: new AppInstallHelper(adb, tempFileTransfer),
+      appInstallHelper: new AppInstallHelper(adb, fileTransfer),
       appUninstallHelper: new AppUninstallHelper(adb),
       instrumentation: new MonitoredInstrumentation(adb),
+      apkHashUtils: new ApkHashUtils({ adb }),
     };
   }
 }

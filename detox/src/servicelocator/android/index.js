@@ -18,7 +18,7 @@ const AndroidServiceLocator = {
 AndroidServiceLocator.adb = new ADB();
 AndroidServiceLocator.aapt = new AAPT();
 AndroidServiceLocator.apkValidator = new ApkValidator(AndroidServiceLocator.aapt);
-AndroidServiceLocator.tempFileTransfer = new TempFileTransfer(AndroidServiceLocator.adb);
+AndroidServiceLocator.fileTransfer = new TempFileTransfer(AndroidServiceLocator.adb);
 AndroidServiceLocator.deviceRegistry = DeviceRegistry.forAndroid();
 AndroidServiceLocator.devicePathBuilder = new AndroidDevicePathBuilder();
 

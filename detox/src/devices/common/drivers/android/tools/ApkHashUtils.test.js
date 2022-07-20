@@ -1,29 +1,34 @@
 jest.mock('../../../../../utils/generateHash');
 const generateHash = require('../../../../../utils/generateHash');
 
-const { isHashUpdated, saveHashToDevice } = require('./ApkHashUtils');
+const ApkHashUtils = require('./ApkHashUtils');
 
 const mockDeviceId = '123';
 const mockHash = 'abcdef';
 const mockBundleId = 'com.android.test';
 const mockBinaryPath = 'mock-bin-path';
 
-let tempFileTransfer;
+let uut;
+let adb;
 
-const ADBMock = jest.genMockFromModule('../exec/ADB');
-const adb = new ADBMock();
+let fileTransfer;
 
 describe('apkHashUtils', () => {
   beforeEach(() => {
-    adb.readFile.mockImplementation(() => Promise.resolve(mockHash));
+    const ADBMock = jest.genMockFromModule('../exec/ADB');
+    adb = new ADBMock();
 
     const { TempFileTransfer } = jest.genMockFromModule('./TempFileTransfer');
-    tempFileTransfer = new TempFileTransfer(adb);
+    fileTransfer = new TempFileTransfer(adb);
+
+    adb.readFile.mockImplementation(() => Promise.resolve(mockHash));
     // @ts-ignore
     generateHash.mockImplementation(() => Promise.resolve(mockHash));
+
+    uut = new ApkHashUtils({ adb });
   });
 
-  describe('isHashUpdated', () => {
+  describe('isHashUpToDate', () => {
     const params = {
       adb,
       deviceId: mockDeviceId,
@@ -32,14 +37,14 @@ describe('apkHashUtils', () => {
     };
 
     it('should return true for revision updated', async () => {
-      const actual = await isHashUpdated(params);
+      const actual = await uut.isHashUpToDate(params);
       expect(actual).toBe(true);
     });
 
     it('should return false for different hash', async () => {
       // @ts-ignore
       generateHash.mockImplementation(() => Promise.resolve('something else'));
-      const actual = await isHashUpdated(params);
+      const actual = await uut.isHashUpToDate(params);
       expect(actual).toBe(false);
     });
   });
@@ -52,18 +57,18 @@ describe('apkHashUtils', () => {
       const deleteFileSpy = jest.spyOn(fs, 'unlinkSync');
 
       const params = {
-        tempFileTransfer,
+        fileTransfer,
         deviceId: mockDeviceId,
         bundleId: mockBundleId,
         binaryPath: mockBinaryPath
       };
 
-      await saveHashToDevice(params);
+      await uut.saveHashToDevice(params);
       await expect(generateHash).toHaveBeenCalledTimes(1);
       await expect(writeFileSpy).toHaveBeenCalledTimes(1);
       await expect(writeFileSpy).toHaveBeenCalledWith(hashFilename, mockHash);
-      await expect(tempFileTransfer.send).toHaveBeenCalledTimes(1);
-      await expect(tempFileTransfer.send).toHaveBeenCalledWith(mockDeviceId, hashFilename, hashFilename);
+      await expect(fileTransfer.send).toHaveBeenCalledTimes(1);
+      await expect(fileTransfer.send).toHaveBeenCalledWith(mockDeviceId, hashFilename, hashFilename);
       await expect(deleteFileSpy).toHaveBeenCalledTimes(1);
     });
   });

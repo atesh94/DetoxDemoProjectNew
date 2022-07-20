@@ -10,23 +10,23 @@ describe('Android app installation helper', () => {
     adb = new ADBMock();
   });
 
-  let tempFileTransfer;
+  let fileTransfer;
   let uut;
   beforeEach(() => {
-    const { TempFileTransfer } = jest.genMockFromModule('./TempFileTransfer');
-    tempFileTransfer = new TempFileTransfer();
+    const FileTransfer = jest.genMockFromModule('./FileTransfer');
+    fileTransfer = new FileTransfer(adb, '/mock-destination-dir');
 
     const AppInstallHelper = require('./AppInstallHelper');
-    uut = new AppInstallHelper(adb, tempFileTransfer);
+    uut = new AppInstallHelper(adb, fileTransfer);
   });
 
   it('should recreate the transient dir on the device', async () => {
     await uut.install(deviceId, appBinaryPath, testBinaryPath);
-    expect(tempFileTransfer.prepareDestinationDir).toHaveBeenCalledWith(deviceId);
+    expect(fileTransfer.prepareDestinationDir).toHaveBeenCalledWith(deviceId);
   });
 
   it('should throw if transient dir prep fails', async () => {
-    tempFileTransfer.prepareDestinationDir.mockRejectedValue(new Error('mocked error in adb-shell'));
+    fileTransfer.prepareDestinationDir.mockRejectedValue(new Error('mocked error in adb-shell'));
 
     try {
       await uut.install(deviceId, appBinaryPath, testBinaryPath);
@@ -36,16 +36,16 @@ describe('Android app installation helper', () => {
 
   it('should push app-binary file to the device', async () => {
     await uut.install(deviceId, appBinaryPath, testBinaryPath);
-    expect(tempFileTransfer.send).toHaveBeenCalledWith(deviceId, appBinaryPath, 'Application.apk');
+    expect(fileTransfer.send).toHaveBeenCalledWith(deviceId, appBinaryPath, 'Application.apk');
   });
 
   it('should push test-binary file to the device', async () => {
     await uut.install(deviceId, appBinaryPath, testBinaryPath);
-    expect(tempFileTransfer.send).toHaveBeenCalledWith(deviceId, testBinaryPath, 'Test.apk');
+    expect(fileTransfer.send).toHaveBeenCalledWith(deviceId, testBinaryPath, 'Test.apk');
   });
 
   it('should break if file push fails', async () => {
-    tempFileTransfer.send.mockRejectedValue(new Error('mocked error in adb-push'));
+    fileTransfer.send.mockRejectedValue(new Error('mocked error in adb-push'));
 
     try {
       await uut.install(deviceId, appBinaryPath, testBinaryPath);
@@ -54,7 +54,7 @@ describe('Android app installation helper', () => {
   });
 
   it('should remote-install both binaries via shell', async () => {
-    tempFileTransfer.send
+    fileTransfer.send
       .mockReturnValueOnce('/mocked-final-dir/first.apk')
       .mockReturnValueOnce('/mocked-final-dir/second.apk');
 
@@ -73,12 +73,12 @@ describe('Android app installation helper', () => {
   });
 
   it('should allow for an install with no test binary', async () => {
-    tempFileTransfer.send
+    fileTransfer.send
       .mockReturnValueOnce('/mocked-final-dir/first.apk')
       .mockReturnValueOnce('/mocked-final-dir/second.apk');
 
     await uut.install(deviceId, appBinaryPath, undefined);
-    expect(tempFileTransfer.send).toHaveBeenCalledTimes(1);
+    expect(fileTransfer.send).toHaveBeenCalledTimes(1);
     expect(adb.remoteInstall).toHaveBeenCalledWith(deviceId, '/mocked-final-dir/first.apk');
     expect(adb.remoteInstall).toHaveBeenCalledTimes(1);
   });

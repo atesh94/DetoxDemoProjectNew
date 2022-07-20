@@ -81,6 +81,10 @@ describe('Device', () => {
       expect(this.driver.installApp).not.toHaveBeenCalled();
     }
 
+    expectOptimizedInstallAppCalled() {
+      expect(this.driver.optimizedInstallApp).toHaveBeenCalled();
+    }
+
     expectTerminateCalled() {
       expect(this.driver.terminate).toHaveBeenCalled();
     }
@@ -363,13 +367,23 @@ describe('Device', () => {
       driverMock.expectTerminateCalled();
     });
 
-    it(`(relaunch) with delete=true`, async () => {
+    it(`(relaunch) with delete=true and optimizeAppInstall false`, async () => {
       const expectedArgs = expectedDriverArgs;
       const device = await aValidDevice();
-
+      device._behaviorConfig.optimizeAppInstall = false;
       await device.relaunchApp({ delete: true });
 
       driverMock.expectReinstallCalled();
+      driverMock.expectLaunchCalledWithArgs(bundleId, expectedArgs);
+    });
+
+    it(`(relaunch) with delete=true and optimizeAppInstall true`, async () => {
+      const expectedArgs = expectedDriverArgs;
+      const device = await aValidDevice();
+      device._behaviorConfig.optimizeAppInstall = true;
+      await device.relaunchApp({ delete: true });
+
+      driverMock.expectOptimizedInstallAppCalled();
       driverMock.expectLaunchCalledWithArgs(bundleId, expectedArgs);
     });
 

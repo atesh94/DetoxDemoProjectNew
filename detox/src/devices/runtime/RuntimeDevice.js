@@ -180,12 +180,8 @@ class RuntimeDevice {
   }
 
   async resetAppState() {
-    if (this._behaviorConfig.optimizeAppInstall) {
-      await this.deviceDriver.optimizedInstallApp(this._currentApp.bundleId, this._currentApp.binaryPath, this._currentApp.testBinaryPath);
-    } else {
-      await this.uninstallApp();
-      await this.installApp();
-    }
+    await traceCall('resetAppState', () =>
+     this.deviceDriver.optimizedInstallApp(this._currentApp.bundleId, this._currentApp.binaryPath, this._currentApp.testBinaryPath));
   }
 
   async installApp(binaryPath, testBinaryPath) {
@@ -320,7 +316,12 @@ class RuntimeDevice {
 
     if (params.delete) {
       await this.terminateApp(bundleId);
-      await this.resetAppState();
+      if (this._behaviorConfig.optimizeAppInstall) {
+        await this.resetAppState();
+      } else {
+        await this.uninstallApp();
+        await this.installApp();
+      }
     } else if (newInstance) {
       await this.terminateApp(bundleId);
     }
