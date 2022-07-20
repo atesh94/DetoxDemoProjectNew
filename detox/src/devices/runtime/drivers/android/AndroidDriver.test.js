@@ -566,7 +566,7 @@ describe('Android driver', () => {
     const ApkValidator = require('../../../common/drivers/android/tools/ApkValidator');
     apkValidator = new ApkValidator();
 
-    jest.mock('../../../common/drivers/android/tools/fileTransfer');
+    jest.mock('../../../common/drivers/android/tools/FileTransfer');
     const FileTransfer = require('../../../common/drivers/android/tools/FileTransfer');
     fileTransfer = new FileTransfer(adb, 'mockFilePath');
     fileTransfer.send.mockResolvedValue(mockNotificationDataTargetPath);
