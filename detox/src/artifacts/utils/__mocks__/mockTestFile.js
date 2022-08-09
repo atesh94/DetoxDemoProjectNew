@@ -1,6 +1,14 @@
 describe('Foo', () => {
+  beforeAll(() => {
+    console.log('prepare to be foo before everything, should be ignored');
+  });
+
   it('should be foo', () => {
     expect('foo').toBe('foo');
+  });
+
+  afterAll(() => {
+    console.log('clean up after all');
   });
 });
 
@@ -35,5 +43,9 @@ describe('Baz', () => {
     afterEach(() => {
       console.log('you are baz qux');
     });
+  });
+
+  afterAll(() => {
+    console.log('clean up after all');
   });
 });

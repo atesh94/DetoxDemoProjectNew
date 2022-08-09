@@ -4,7 +4,7 @@ const getCodeForTest = require('./getCodeForTest');
 const mockTestFilePath = path.join(__dirname, '/__mocks__/mockTestFile.js');
 
 describe('getCodeForTest', () =>  {
-  it('should return the code for test without before / after each', async () =>  {
+  it('should return the code for test with before all and after all', async () =>  {
     const code = await getCodeForTest(mockTestFilePath, 'Foo should be foo');
 
     expect(code).toEqual({ it: 'expect(\'foo\').toBe(\'foo\');' });
