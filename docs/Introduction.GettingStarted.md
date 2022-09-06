@@ -15,32 +15,6 @@ You will find that some steps are longer than the others: some are just one-para
 
 ## Step 1: Environment Setup
 
-### Install [Node.js](https://nodejs.org/en/)
-
-`Node.js` is the JavaScript runtime Detox will run on. **Install Node.js `v12.0` or above**.
-
-There’s more than one way to install Node.js:
-
-- Download from the [official download page](https://nodejs.org/en/download/)
-- Use [Homebrew](https://formulae.brew.sh/formula/node)
-- Use `nvm` - if you need to allow for several versions to be installed on a single machine
-
-The simplest way is to use Homebrew:
-
-```sh
-brew install node
-```
-
-> Tip: Verify installation succeeded by typing in `node -v` in the terminal to output current node version.
-
-### Install Detox Command Line Tools (`detox-cli`)
-
-This package makes it easier to operate Detox from the command line. `detox-cli` should be installed globally, enabling usage of the command line tools outside your npm scripts. `detox-cli` is merely a script that passes commands through to a command line tool shipped inside `detox` package (in `node_modules/.bin/detox`).
-
-```bash npm2yarn
-npm install detox-cli --global
-```
-
 ### Install Platform-specific Dependencies, Tools and SDKs
 
 Depending on the platform/s you’re aiming at (iOS, Android), take the time to run through these environment setup guides:
@@ -48,55 +22,109 @@ Depending on the platform/s you’re aiming at (iOS, Android), take the time to 
 - [Android](Introduction.AndroidDevEnv.md)
 - [iOS](Introduction.iOSDevEnv.md)
 
+### Install [Node.js](https://nodejs.org/en/)
+
+`Node.js` is the JavaScript runtime Detox will run on.
+Detox supports Node.js `v14.0` or newer.
+
+There’s more than one way to install Node.js:
+
+- Download from the [official download page](https://nodejs.org/en/download/).
+- Use [nvm](https://github.com/nvm-sh/nvm) - if you need to allow for several versions to be installed on a single machine.
+- Use [Homebrew](https://formulae.brew.sh/formula/node) (on MacOS): `brew install node`.
+
+Before you proceed, run `node -v` command in your terminal to verify your Node.js version meets the minimal requirements.
+
+### Install Detox Command Line Tools (`detox-cli`)
+
+`detox-cli` is merely a script that passes commands through to
+a local Detox executable located at `node_modules/.bin/detox`,
+making it easier to operate Detox from the command line, e.g. `detox test -c ios.sim.debug`.
+
+It should be installed globally, enabling usage of the command line tools outside your npm scripts:
+
+```bash npm2yarn
+npm install detox-cli --global
+```
+
 ## Step 2: Add Detox to Your Project
 
-### Install the Detox Node-module
+### Install Detox inside your project
 
-If you have a React Native project, go to its root folder (where `package.json` is found) and type the following command:
+Assuming you have a React Native project, go to its root folder (where `package.json` is found)
+and run the following command:
 
 ```bash npm2yarn
 npm install detox --save-dev
 ```
 
-If you have a project without Node integration (such as a native project), add the following `package.json` file to the root folder of your project:
+:::caution
 
-```json
-{
-  "name": "<your_project_name>",
-  "version": "0.0.1"
-}
-```
-
-Name your project in `package.json` and then run the following command:
+If there is no `package.json` in your project, you need to create it before installing Detox:
 
 ```bash npm2yarn
-npm install detox --save-dev --no-package-lock
+npm init -y
 ```
 
-**You should now have Detox available in `node_modules/detox`**
+And remember to add the `node_modules` folder to your `.gitignore` file.
 
-> **Tip:** Remember to add the `node_modules` folder to your git ignore file (e.g. `.gitignore`).
+:::
 
-### Set Up a Test Runner
+### Bootstrap Detox
 
-Follow [our comprehensive guide for Jest](Guide.Jest.md).
+After installing, initialize Detox in your project:
 
-### Apply Detox Configuration
+```bash
+detox init
+```
 
-If you’ve completed the test runner setup successfully using `detox init`, you should have a `.detoxrc.json` file containing a skeletal configuration for Detox to use. This configuration is only half-baked and needs to be set up properly. You now need to either create or edit that file, and apply the actual configuration suitable for your specific project.
+Normally you should see an output like:
 
-Detox scans for a configuration through multiple files. It starts from the current working directory, and runs over the following options, in this order:
+```plain text
+Created a file at path: .detoxrc.js
+Created a file at path: e2e/jest.config.js
+Created a file at path: e2e/starter.test.js
+```
 
-1. `.detoxrc.js`
-1. `.detoxrc.json`
-1. `.detoxrc`
-1. `detox.config.js`
-1. `detox.config.json`
-1. `package.json` (`"detox"` section)
+:::tip
+If you see a message like `command not found: detox`, make sure you have [installed Detox command line tools](#install-detox-command-line-tools-detox-cli).
+:::
 
-If you prefer to use something other than `.detoxrc.json`—for example, would like to keep all project configs in one place—you can create a `detox` section in your `package.json`. If you otherwise prefer separating configs, all of the other options are valid.
+### Install a test runner
 
-For specific configuration options for each supported platform, see:
+Out of the box, Detox can offer you a first-class integration with [Jest](https://jestjs.io) test runner –
+all you need to do is to run:
+
+```bash npm2yarn
+npm install "jest@>=27.2.5" --save-dev
+```
+
+:::info
+The command above will install the **latest Jest version**. However, `@>=27.2.5` addendum is recommended just to be on the safe side in a common scenario, when a `package-lock.json`
+generated by an official React Native project template limits Jest version to a very old `26.x`, maybe due to some optimization mechanism.
+:::
+
+For more details on fine-tuning the Jest integration,
+see [our comprehensive guide for Jest](Guide.Jest.md).
+
+### App configuration guide
+
+Replace `YOUR_APP` string in the created `.detoxrc.js` file with your app name
+and fix build commands and file locations where needed, e.g.:
+
+```diff
+   apps: {
+     'ios.debug': {
+       type: 'ios.app',
+-      binaryPath: 'ios/build/Build/Products/Debug-iphonesimulator/YOUR_APP.app',
++      binaryPath: 'ios/build/Build/Products/Debug-iphonesimulator/example.app',
+       build: 'xcodebuild -workspace ios/YOUR_APP.xcworkspace -scheme YOUR_APP -configuration Debug -sdk iphonesimulator -derivedDataPath ios/build'
++      build: 'xcodebuild -workspace ios/example.xcworkspace -scheme example -configuration Debug -sdk iphonesimulator -derivedDataPath ios/build'
+     },
+```
+
+But that alone won't be enough, so please go through each guide for platforms
+you use in your project to finish `apps` configuration:
 
 - [Android](Introduction.Android.md)
 - [iOS](Introduction.iOS.md)
@@ -113,7 +141,40 @@ detox build --configuration <your configuration name>
 
 > **Note:** Detox executes the build command you specified in your Detox configuration. If your build fails, make sure to provide the correct build command.
 
-### 2. Run the Tests
+### 2. Start React Native packager
+
+Assuming you are testing a React Native app, before you run Detox tests,
+you need to make sure the packager is running in parallel:
+
+```bash
+npx react-native start
+
+#                        #######
+#                   ################
+#                #########     #########
+#            #########             ##########
+#        #########        ######        #########
+#       ##########################################
+#      #####      #####################       #####
+#      #####          ##############          #####
+#      #####    ###       ######       ###    #####
+#      #####    #######            #######    #####
+#      #####    ###########    ###########    #####
+#      #####    ##########################    #####
+#      #####    ##########################    #####
+#      #####      ######################     ######
+#       ######        #############        #######
+#         #########        ####       #########
+#              #########          #########
+#                  ######### #########
+#                       #########
+#
+#
+#                    Welcome to Metro!
+#              Fast - Scalable - Integrated
+```
+
+### 3. Run the Tests
 
 Use the Detox command line tools to test your project easily:
 
@@ -122,5 +183,23 @@ detox test --configuration <your configuration name>
 ```
 
 That’s it. Your first failing Detox test is running!
+
+```plain text
+● Example › should have welcome screen
+
+  Test Failed: No elements found for “MATCHER(id == “welcome”)”
+
+  HINT: To print view hierarchy on failed actions/matches, use log-level verbose or higher.
+
+     9 |
+    10 |   it('should have welcome screen', async () => {
+  > 11 |     await expect(element(by.id('welcome'))).toBeVisible();
+       |                                             ^
+    12 |   });
+    13 |
+    14 |   it('should show hello screen after tap', async () => {
+
+    at Object.toBeVisible (test/e2e/starter.test.js:11:45)
+```
 
 Next, we’ll go over usage and how to make this test [actually pass](Introduction.WritingFirstTest.md).

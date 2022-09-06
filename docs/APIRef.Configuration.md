@@ -7,9 +7,26 @@ sidebar_label: Configuration Options
 
 ## Configuration Options
 
+### Apply Detox Configuration
+
+If you’ve completed the test runner setup successfully using `detox init`, you should have a `.detoxrc.js` file containing a skeletal configuration for Detox to use. This configuration is only half-baked and needs to be set up properly. You now need to either create or edit that file, and apply the actual configuration suitable for your specific project.
+
+Detox scans for a configuration through multiple files. It starts from the current working directory, and runs over the following options, in this order:
+
+1. `.detoxrc.js`
+1. `.detoxrc.json`
+1. `.detoxrc`
+1. `detox.config.js`
+1. `detox.config.json`
+1. `package.json` (`"detox"` section)
+
+If you prefer to use something other than `.detoxrc.js`—for example, would like to keep all project configs in one place—you can create a `detox` section in your `package.json`.
+If you otherwise prefer separating configs, all of the other options are valid.
+
 ### Configuration File
 
-In order for Detox to know what device & app to use (and a lot more, actually), it needs some configuration to be statically available in a configuration file. It supports both standalone configuration files, and a configuration bundling inside the project’s `package.json`.
+In order for Detox to know what device & app to use (and a lot more, actually), it needs some configuration to be statically available in a configuration file.
+It supports both standalone configuration files, and a configuration bundling inside the project’s `package.json`.
 
 In essence, Detox scans for the configuration to use, through multiple files. It starts from the current working directory, and runs over the following options, in this order:
 
@@ -166,7 +183,7 @@ A device config can have the following params:
 | `bootArgs`           | _Optional. String. Supported by `ios.simulator` and `android.emulator` only._ <br/> Supply an extra _String_ of arguments to `xcrun simctl boot ...` or `emulator -verbose ... @AVD_Name`.                                                                                                                                                                                                                                                                                                          |
 | `forceAdbInstall`    | _Optional. Boolean. Supported for Android devices only._ <br/> A _Boolean_ value, `false` by default. When set to `true`, it tells `device.installApp()` to use `adb install`. Otherwise, it would use the combination of `adb push <app.apk>` and `adb shell pm install`.                                                                                                                                                                                                                          |
 | `utilBinaryPaths`    | _Optional. Array of strings. Supported for Android devices only._ <br/> An array of relative paths of _utility_ app (APK) binary-files to preinstall on the tested devices - once before the test execution begins.<br/>**Note**: these are not affected by various install-lifecycle events, such as launching an app with `device.launchApp({delete: true})`, which reinstalls the app. A good example of why this might come in handy is [Test Butler](https://github.com/linkedin/test-butler). |
-| `gpuMode`            | _Optional. String Literal (<code>auto \                                                                                                                                                                                                                                                                                                                                                                                                                                                             | host \| swiftshader\_indirect \| angle\_indirect \| guest</code>). Supported by `android.emulator` only._ <br/> A fixed **string** , which tells [in which GPU mode](https://developer.android.com/studio/run/emulator-acceleration#command-gpu) the emulator should be booted.                                                                                                                                                                            |
+| `gpuMode`            | _Optional. String Literal (<code>auto \| host \| swiftshader\_indirect \| angle\_indirect \| guest</code>). Supported by `android.emulator` only._ <br/> A fixed **string** , which tells [in which GPU mode](https://developer.android.com/studio/run/emulator-acceleration#command-gpu) the emulator should be booted.                                                                                                                                                                            |
 | `headless`           | _Optional. Boolean._ `false` by default. When set to `true`, it tells Detox to boot an Android emulator with `-no-window` option, or to not open the iOS Simulator app when running with Android or iOS respectively.                                                                                                                                                                                                                                                                               |
 | `readonly`           | _Optional. Boolean. Supported by `android.emulator` only._ <br/>  `false` by default. When set to `true`, it forces Detox to boot even a single emulator with `-read-only` option.<br/>**Note**: when used with multiple workers, this setting has no effect — emulators will be booted always with `-read-only`.                                                                                                                                                                                   |
 

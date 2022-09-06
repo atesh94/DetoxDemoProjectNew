@@ -57,9 +57,11 @@ class DetoxLogger {
         level: 'info',
         overrideConsole: 'none',
         options: {
-          showDate: true,
+          showDate: false,
           showLoggerName: true,
-          showPid: true,
+          showProcess: false,
+          showPid: false,
+          showLevel: false,
           showPrefixes: false,
           showMetadata: false,
         },

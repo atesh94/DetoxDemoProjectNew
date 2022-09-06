@@ -9,11 +9,11 @@ sidebar_label: Detox for Android
 
 ## Detox for Android
 
-### Breaking Changes :warning:
+:::caution Breaking Changes
 
-**If you are installing Detox for Android for the first time, you can skip over to the setup section.**
+If you are installing Detox for Android for the first time, **you can skip over to the setup section.**
 
-> Follow our [Migration Guide](Guide.Migration.md) for instructions on how to upgrade from older versions.
+Follow our [Migration Guide](Guide.Migration.md) for instructions on how to upgrade from older versions.
 
 - **In version 11 we switched to using Android Espresso of Android’s new [androidx.\*  support libraries](https://developer.android.com/jetpack/androidx/).** We did this in order to stay up to date with Google’s latest features and bug fixes, in the hopes of using them to improve our own Android support (which gets better every day!).
 
@@ -27,6 +27,8 @@ sidebar_label: Detox for Android
 
 **Note: As a rule of thumb, we consider all old major versions discontinued; We only support the latest Detox major version.**
 
+:::
+
 ### Setup :gear:
 
 #### 1. Preliminary
@@ -35,7 +37,7 @@ Run through the basic steps of the [Getting Started guide](Introduction.GettingS
 
 #### 2. Apply Detox Configuration
 
-Whether you’ve selected to apply the configuration in a  `.detoxrc.json` or bundle it into your project’s `package.json` (under the `detox` section), this is what the configuration should roughly look like for Android:
+Whether you’ve selected to apply the configuration in a  `.detoxrc.js` or bundle it into your project’s `package.json` (under the `detox` section), this is what the configuration should roughly look like for Android:
 
 ```json
 {
