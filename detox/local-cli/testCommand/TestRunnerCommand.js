@@ -36,9 +36,8 @@ class TestRunnerCommand {
    */
   setRunnerConfig(config) {
     this._argv = config.args;
-    this._retries = config.retries;
-
-    if (config.inspectBrk === true) {
+    this._retries = config.inspectBrk ? 0 : config.retries;
+    if (config.inspectBrk || config.forwardEnv) {
       this._env = this._envHint;
     }
 
