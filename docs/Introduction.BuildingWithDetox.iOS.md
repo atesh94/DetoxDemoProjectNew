@@ -1,18 +1,3 @@
----
-id: ios
-slug: introduction/ios
-title: Detox for iOS
-sidebar_label: Detox for iOS
----
-
-## Detox for iOS
-
-### 1. Preliminary
-
-Run through the basic steps of the [Getting Started guide](Introduction.GettingStarted.md), such as the environment and tools setup.
-
-### 2. Apply Detox Configuration
-
 Whether you’ve selected to apply the configuration in a  `.detoxrc.js` or bundle it into your project’s `package.json` (under the `detox` section), this is what the configuration should roughly look like for iOS:
 
 ```json

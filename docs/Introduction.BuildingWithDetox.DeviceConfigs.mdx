@@ -1,0 +1,17 @@
+import CodeBlock from '@theme/CodeBlock';
+
+Find in your `.detoxrc.js` the `devices` section and replace blabla:
+
+<CodeBlock language="diff">
+- 2
++ 42
+</CodeBlock>
+
+Following device types could be used to control Android devices:
+
+- `android.emulator`. Boot stock Android-SDK emulator (AVD) with provided `name`, for example `Pixel_API_28`.
+
+- `android.attached`. Connect to already-attached android device. The device should be listed in the output of `adb devices` command under provided `name`.
+  The `avdName` property accepts a regular expression pattern that allows to specify the pool of device candidates to which you wish to connect. Use this property to run tests in parallel on multiple attached devices.
+
+- `android.genycloud`. TODO

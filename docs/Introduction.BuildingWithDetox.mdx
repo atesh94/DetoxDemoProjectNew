@@ -1,133 +1,77 @@
 ---
-id: android
-slug: introduction/android
-title: Detox for Android
-sidebar_label: Detox for Android
+id: building-with-detox
+slug: introduction/building-with-detox
 ---
 
-<!-- markdownlint-configure-file { "no-trailing-punctuation": 0 } -->
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
-## Detox for Android
+import PrepareAndroid from './Introduction.BuildingWithDetox.AppConfigs.mdx';
 
-:::caution Breaking Changes
+# Building with Detox
 
-If you are installing Detox for Android for the first time, **you can skip over to the setup section.**
+:::info
 
-Follow our [Migration Guide](Guide.Migration.md) for instructions on how to upgrade from older versions.
-
-- **In version 11 we switched to using Android Espresso of Android’s new [androidx.\*  support libraries](https://developer.android.com/jetpack/androidx/).** We did this in order to stay up to date with Google’s latest features and bug fixes, in the hopes of using them to improve our own Android support (which gets better every day!).
-
-- **In version 10, we’ve made [Kotlin](https://kotlinlang.org/) mandatory for integrating Detox into your Android project.** In the very least, you must include the Kotlin Gradle plugin in your project, as we shall see later on. Nevertheless, this is a breaking change so bear that in mind when upgrading. In any case, worry not of the impact on your app, as - unless you effectively use Kotlin in your own native code, **there will be no impact on the final APK**, in terms of size and methods count.
-
-- **As of version 7** we require Android Gradle plugin 3.0.0 or newer. This is a breaking change that makes it impossible to support previous Android Gradle plugin versions.
-
-  <https://developer.android.com/studio/build/gradle-plugin-3-0-0-migration.html>
-
-  For older Android Gradle plugin support use `detox@6.x.x` instead ([previous setup guide here](https://github.com/wix/detox/blob/97654071573053def90e8207be8eba011408f977/docs/Introduction.Android.md)).
-
-**Note: As a rule of thumb, we consider all old major versions discontinued; We only support the latest Detox major version.**
+This article targets standard or just-generated React Native projects.
+If some steps don't look applicable to your project, please adapt them accordingly
+or skip, relying on the common sense.
 
 :::
 
-### Setup :gear:
+So, Detox generated those three files in your project's root:
 
-#### 1. Preliminary
+* `.detoxrc.js` – Detox' own configuration file;
+* `e2e/jest.config.js` – test runner configuration;
+* `e2e/starter.test.js` – dummy first test.
 
-Run through the basic steps of the [Getting Started guide](Introduction.GettingStarted.md), such as the environment and tools setup.
+## Step 1: App configs
 
-#### 2. Apply Detox Configuration
+Yet, your Detox config is still not ready – you need to provide it the right **commands
+to build** your app for iOS and Android, and also the right **paths to the app binaries** so
+that Detox can install them on the device and launch for your tests.
 
-Whether you’ve selected to apply the configuration in a  `.detoxrc.js` or bundle it into your project’s `package.json` (under the `detox` section), this is what the configuration should roughly look like for Android:
+<Tabs>
+    <TabItem value="iOS" label="iOS" default>
+        <PrepareAndroid
+            platform={'iOS'}
+            appDiff={(conf) => `\
+   apps: {
+     'ios.${conf.toLowerCase()}': {
+       type: 'ios.app',
+-      binaryPath: 'ios/build/Build/Products/${conf}-iphonesimulator/YOUR_APP.app',
++      binaryPath: 'ios/build/Build/Products/${conf}-iphonesimulator/example.app',
+       build: 'xcodebuild -workspace ios/YOUR_APP.xcworkspace -scheme YOUR_APP -configuration ${conf} -sdk iphonesimulator -derivedDataPath ios/build'
++      build: 'xcodebuild -workspace ios/example.xcworkspace -scheme example -configuration ${conf} -sdk iphonesimulator -derivedDataPath ios/build'
+     },
+            `}
+        />
+    </TabItem>
+    <TabItem value="Android" label="Android">
+        <PrepareAndroid
+            platform={'Android'}
+            appDiff={(conf) => `\
+   apps: {
+     'android.${conf.toLowerCase()}': {
+       type: 'android.apk',
+-      binaryPath: 'android/app/build/outputs/apk/${conf.toLowerCase()}/app-${conf.toLowerCase()}.apk',
++      binaryPath: 'android/app/build/outputs/apk/${conf.toLowerCase()}/app-${conf.toLowerCase()}.apk',
+-      build: 'cd android && ./gradlew assemble${conf} assembleAndroidTest -DtestBuildType=${conf.toLowerCase()}'
++      build: 'cd android && ./gradlew assemble${conf} assembleAndroidTest -DtestBuildType=${conf.toLowerCase()}'
+     },
+            `}/>
+        <div>
+            Pay attention to `-DtestBuildType`, set either to `debug` or `release` according to the main APK type.
+        </div>
+    </TabItem>
+</Tabs>
 
-```json
-{
-  "devices": {
-    "emulator": {
-      "type": "android.emulator",
-      "device": {
-        "avdName": "Pixel_API_28"
-      }
-    }
-  },
-  "apps": {
-    "android.debug": {
-      "type": "android.apk",
-      "binaryPath": "android/app/build/outputs/apk/debug/app-debug.apk",
-      "build": "cd android && ./gradlew assembleDebug assembleAndroidTest -DtestBuildType=debug && cd .."
-    },
-    "android.release": {
-      "type": "android.apk",
-      "binaryPath": "android/app/build/outputs/apk/release/app-release.apk",
-      "build": "cd android && ./gradlew assembleRelease assembleAndroidTest -DtestBuildType=release && cd .."
-    }
-  },
-  "configurations": {
-    "android.emu.debug": {
-      "device": "emulator",
-      "app": "android.debug"
-    },
-    "android.emu.release": {
-      "device": "emulator",
-      "app": "android.release"
-    }
-  }
-}
-```
+## Step 2: Device configs
 
-> For a comprehensive explanation of Detox configuration, refer to the [dedicated API-reference guide](APIRef.Configuration.md).
+Blabla
 
-Pay attention to `-DtestBuildType`, set either to `debug` or `release` according to the main APK type.
+## Step 3: Android configuration
 
-Following device types could be used to control Android devices:
-
-- `android.emulator`. Boot stock Android-SDK emulator (AVD) with provided `name`, for example `Pixel_API_28`.
-
-- `android.attached`. Connect to already-attached android device. The device should be listed in the output of `adb devices` command under provided `name`.
-  Use this type to connect to Genymotion emulator.
-  The `avdName` property accepts a regular expression pattern that allows to specify the pool of device candidates to which you wish to connect. Use this property to run tests in parallel on multiple attached devices.
-
-For a complete, working example, refer to the [Detox example app](https://github.com/wix/Detox/tree/master/examples/demo-react-native/detox.config.js).
-
-##### Using product flavors
-
-If you are using custom [`productFlavors`](https://developer.android.com/studio/build/build-variants#product-flavors) the config needs to be applied a bit differently. This example shows how a `beta` product flavor would look for both debug and release build types:
-
-```json
-"detox" : {
-  "devices": {
-    "emulator": {
-      "type": "android.emulator",
-      "device": {
-        "avdName": "Pixel_API_28"
-      }
-    }
-  },
-  "apps": {
-    "android.beta.debug": {
-      "type": "android.apk",
-      "binaryPath": "android/app/build/outputs/apk/beta/debug/app-beta-debug.apk",
-      "build": "cd android && ./gradlew assembleBetaDebug assembleBetaDebugAndroidTest -DtestBuildType=debug && cd .."
-    },
-    "android.beta.release": {
-      "type": "android.apk",
-      "binaryPath": "android/app/build/outputs/apk/beta/release/app-beta-release.apk",
-      "build": "cd android && ./gradlew assembleBetaRelease assembleBetaReleaseAndroidTest -DtestBuildType=release && cd .."
-    }
-  },
-  "configurations": {
-    "android.emu.beta.debug": {
-      "device": "emulator",
-      "app": "android.beta.debug"
-    },
-    "android.emu.beta.release": {
-      "device": "emulator",
-      "app": "android.beta.release"
-    }
-  }
-}
-```
-
-#### 3. Add the Native Detox dependency
+### 1. Add the Native Detox dependency
 
 > **Starting Detox 12.5.0, Detox is shipped as a precompiled `.aar`.**
 > To configure Detox as a _compiling dependency_, nevertheless -- refer to the _Setting Detox up as a compiling dependency_ section at the bottom.
@@ -153,8 +97,6 @@ In your app’s `buildscript` (i.e. `android/app/build.gradle`) add this in `dep
 ```groovy
 dependencies {
     // ...
-    androidTestImplementation('com.wix:detox:+')
-}
 ```
 
 also ensure that this line appears in `dependencies`:
@@ -182,7 +124,7 @@ android {
 
 Please be aware that the `minSdkVersion` needs to be at least 18.
 
-#### 4. Add Kotlin
+### 4. Add Kotlin
 
 If your project does not already support Kotlin, add the Kotlin Gradle-plugin to your `classpath` in the root build-script (i.e.`android/build.gradle`):
 
@@ -201,14 +143,14 @@ _Note: most guides advise of defining a global `kotlinVersion` constant - as in 
 
 _**Note that Detox has been tested for version 1.1.0 of Kotlin, and higher!**_
 
-#### 5. Create a Detox-Test Class
+### 5. Create a Detox-Test Class
 
 Detox requires a dummy implementation of a single Android-native test.
 
 1. Add a new file to your project, under this path and name: `android/app/src/androidTest/java/com/[your.package]/DetoxTest.java`. **Double-check that the path is correct!**
 1. Copy & paste the content of the equivalent file from [the detox example app for RN](https://github.com/wix/Detox/tree/master/examples/demo-react-native/android/app/src/androidTest/java/com/example/DetoxTest.java), into it. **Don’t forget to change the package name to your project’s package name!**
 
-#### 6. Enable clear-text (unencrypted) traffic for Detox
+### 6. Enable clear-text (unencrypted) traffic for Detox
 
 Starting from Android SDK API level 28, Google have disabled all clear-text network traffic by default. Namely, unless explicitly configured, all of your application’s outgoing unencrypted traffic (i.e. non-TLS using HTTP rather than HTTPS) is blocked by the device.
 
@@ -245,7 +187,7 @@ For full details, refer to [Android’s security-config guide](https://developer
 
 > _(\*) 10.0.2.2 for Google emulators, 10.0.3.2 for Genymotion emulators._
 
-#### 7. ProGuard (Minification, Obfuscation)
+### 7. ProGuard (Minification, Obfuscation)
 
 In apps running [minification using ProGuard](https://developer.android.com/studio/build/shrink-code), in order for Detox to work well on release builds, please enable some Detox ProGuard configuration rules by applying the custom configuration file on top of your own. Typically, this is defined using the `proguardFiles` statement in the minification-enabled build-type in your `app/build.gradle`:
 
@@ -292,9 +234,11 @@ Following the example, you would then have to build your app using `gradlew asse
 **Last but not least:** If you’re having issue with Detox' ProGuard rules, please report them [here](https://github.com/wix/Detox/issues/new/choose).
 A special thanks to [@GEllickson-Hover](https://github.com/GEllickson-Hover) for reporting issues related to obfuscation in [#2431](https://github.com/wix/Detox/issues/2431).
 
-#### 8. Test Butler Support (Optional)
+### 8. Test Butler Support (Optional)
 
-If, when [setting up your work environment](Introduction.AndroidDevEnv.md), you’ve selected Google emulators with an AOSP image as the test target - as recommended, **we strongly encourage** you would also integrate [Test Butler](https://github.com/linkedin/test-butler): in the very least - in order to suppress crash and ANR dialogs. They are a soft spot in UI testing on Android, all around, as - when displayed, they make the UI entirely inaccessible (and thus cause tests to fail in bulks).
+If, when [setting up your work environment](Introduction.AndroidDevEnv.md), you’ve selected Google emulators with an AOSP image as the test target - as recommended,
+**we strongly encourage** you would also integrate [Test Butler](https://github.com/linkedin/test-butler): in the very least - in order to suppress crash and ANR dialogs.
+They are a soft spot in UI testing on Android, all around, as - when displayed,they make the UI entirely inaccessible (and thus cause tests to fail in bulks).
 
 Setting Test Butler up for working with Detox is a bit different than explained in their guides. The process, as a whole, is twofold:
 
@@ -305,13 +249,13 @@ The library part can be easily achieved as explained there (i.e. by using Gradle
 
 > _For a complete and thorough coverage of the Test Butler integration with Detox, consider going over our [blogpost on CI execution](https://medium.com/wix-engineering/how-to-execute-android-ui-tests-on-ci-and-stay-alive-eb9089d88c1f) on medium_.
 
-##### Solution 1: Prebaked Images
+#### Solution 1: Prebaked Images
 
 If you have control over the emulators' snapshots, simply download (see test-butler’s guide) and install the test-butler APK once (e.g. use `adb install -r -t path/to/test-butler-app.apk`), and save an updated version of the snapshot. This is the best solution.
 
 > Note: you will have to reiterate this if you upgrade to a newer version of Test-Butler, in the future.
 
-##### Solution 2: Dynamic Installation
+#### Solution 2: Dynamic Installation
 
 Assuming you have the APK available in the system, you can dynamically have Detox automatically install it in all of the running target-emulators by utilizing `utilBinaryPaths` in your Detox configuration. Example:
 
@@ -343,55 +287,82 @@ _Jests' [global-setup](https://jestjs.io/docs/en/configuration#globalsetup-strin
 
 b. (Discouraged) Add it to your source control (e.g. git), as part of the repository.
 
-### Setting Detox up as a compiling dependency
+## Step 4: Build Your App and Run Detox Tests
 
-This is an **alternative** to the setup process described under the previous section, on adding Detox as a dependency.
+### 1. Build Your App
 
-In your project’s `settings.gradle` add:
+Use a convenience method in Detox command line tools to build your project easily:
 
-```groovy
-include ':detox'
-project(':detox').projectDir = new File(rootProject.projectDir, '../node_modules/detox/android/detox')
+```sh
+detox build --configuration <your configuration name>
 ```
 
-In your _root_ `buildscript` (i.e. `android/build.gradle`), register `google()` as a repository lookup point in all projects:
+> **Note:** Detox executes the build command you specified in your Detox configuration. If your build fails, make sure to provide the correct build command.
 
-```groovy
-// Note: add the 'allproject' section if it doesn’t exist
-allprojects {
-    repositories {
-        // ...
-        google()
-    }
-}
+### 2. Start React Native packager
+
+Assuming you are testing a React Native app, before you run Detox tests,
+you need to make sure the packager is running in parallel:
+
+```bash
+npx react-native start
+
+#                        #######
+#                   ################
+#                #########     #########
+#            #########             ##########
+#        #########        ######        #########
+#       ##########################################
+#      #####      #####################       #####
+#      #####          ##############          #####
+#      #####    ###       ######       ###    #####
+#      #####    #######            #######    #####
+#      #####    ###########    ###########    #####
+#      #####    ##########################    #####
+#      #####    ##########################    #####
+#      #####      ######################     ######
+#       ######        #############        #######
+#         #########        ####       #########
+#              #########          #########
+#                  ######### #########
+#                       #########
+#
+#
+#                    Welcome to Metro!
+#              Fast - Scalable - Integrated
 ```
 
-In your app’s `buildscript` (i.e. `android/app/build.gradle`) add this in `dependencies` section:
+### 3. Run the Tests
 
-```groovy
-dependencies {
-   // ...
-    androidTestImplementation(project(path: ":detox"))
-}
+Use the Detox command line tools to test your project easily:
+
+```sh
+detox test --configuration <your configuration name>
 ```
 
-In your app’s `buildscript` (i.e. `android/app/build.gradle`) add this to the `defaultConfig` subsection:
+That’s it. Your first failing Detox test is running!
 
-```groovy
-android {
-  // ...
+```plain text
+● Example › should have welcome screen
 
-  defaultConfig {
-      // ...
-      testBuildType System.getProperty('testBuildType', 'debug')  // This will later be used to control the test apk build type
-      testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
-      missingDimensionStrategy 'detox', 'full'
-  }
-}
+  Test Failed: No elements found for “MATCHER(id == “welcome”)”
+
+  HINT: To print view hierarchy on failed actions/matches, use log-level verbose or higher.
+
+     9 |
+    10 |   it('should have welcome screen', async () => {
+  > 11 |     await expect(element(by.id('welcome'))).toBeVisible();
+       |                                             ^
+    12 |   });
+    13 |
+    14 |   it('should show hello screen after tap', async () => {
+
+    at Object.toBeVisible (test/e2e/starter.test.js:11:45)
 ```
 
-Please be aware that the `minSdkVersion` needs to be at least 18.
+Next, we’ll go over usage and how to make this test [actually pass](Introduction.WritingFirstTest.md).
 
-### Troubleshooting
+## Troubleshooting
 
 Please refer to [troubleshooting guide about build issues](Troubleshooting.BuildingTheApp.md#android) for assistance.
+

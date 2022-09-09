@@ -19,10 +19,7 @@ const sidebars = {
       label: 'Introduction',
       items: [
         'getting-started',
-        'ios-dev-env',
-        'android-dev-env',
-        'ios',
-        'android',
+        'building-with-detox',
         'writing-first-test',
         'how-detox-works',
         'design-principles',
@@ -64,7 +61,6 @@ const sidebars = {
       type: 'category',
       label: 'Guides',
       items: [
-        'running-locally',
         'developing-while-writing-tests',
         'running-on-ci',
         'debugging-in-xcode',
@@ -74,7 +70,6 @@ const sidebars = {
         'jest',
         'parallel-test-execution',
         'third-party-drivers',
-        'expo',
         'uninstalling',
       ]
     },
