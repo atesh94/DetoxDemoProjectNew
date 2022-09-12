@@ -6,9 +6,12 @@ slug: introduction/building-with-detox
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-import PrepareAndroid from './Introduction.BuildingWithDetox.AppConfigs.mdx';
+import PrepareAppConfigsIos from './Introduction.BuildingWithDetox.AppConfigs.iOS.mdx';
+import PrepareAppConfigsAndroid from './Introduction.BuildingWithDetox.AppConfigs.Android.mdx';
+import PrepareDeviceConfigsIos from './Introduction.BuildingWithDetox.DeviceConfigs.iOS.mdx';
+import PrepareDeviceConfigsAndroid from './Introduction.BuildingWithDetox.DeviceConfigs.Android.mdx';
 
-# Building with Detox
+# Building for Detox
 
 :::info
 
@@ -18,7 +21,7 @@ or skip, relying on the common sense.
 
 :::
 
-So, Detox generated those three files in your project's root:
+After Detox generated these files in your project's root, you still have some work to do with them:
 
 * `.detoxrc.js` – Detox' own configuration file;
 * `e2e/jest.config.js` – test runner configuration;
@@ -26,60 +29,84 @@ So, Detox generated those three files in your project's root:
 
 ## Step 1: App configs
 
-Yet, your Detox config is still not ready – you need to provide it the right **commands
-to build** your app for iOS and Android, and also the right **paths to the app binaries** so
-that Detox can install them on the device and launch for your tests.
+In this step you need to provide Detox with the right **commands to build** your app for iOS and Android,
+and also the right **paths to the app binaries** so that Detox can install your app on the device before
+actually starting the tests.
 
-<Tabs>
+<Tabs groupId="mobileOs">
     <TabItem value="iOS" label="iOS" default>
-        <PrepareAndroid
-            platform={'iOS'}
-            appDiff={(conf) => `\
-   apps: {
-     'ios.${conf.toLowerCase()}': {
-       type: 'ios.app',
--      binaryPath: 'ios/build/Build/Products/${conf}-iphonesimulator/YOUR_APP.app',
-+      binaryPath: 'ios/build/Build/Products/${conf}-iphonesimulator/example.app',
-       build: 'xcodebuild -workspace ios/YOUR_APP.xcworkspace -scheme YOUR_APP -configuration ${conf} -sdk iphonesimulator -derivedDataPath ios/build'
-+      build: 'xcodebuild -workspace ios/example.xcworkspace -scheme example -configuration ${conf} -sdk iphonesimulator -derivedDataPath ios/build'
-     },
-            `}
-        />
+        <PrepareAppConfigsIos />
     </TabItem>
     <TabItem value="Android" label="Android">
-        <PrepareAndroid
-            platform={'Android'}
-            appDiff={(conf) => `\
-   apps: {
-     'android.${conf.toLowerCase()}': {
-       type: 'android.apk',
--      binaryPath: 'android/app/build/outputs/apk/${conf.toLowerCase()}/app-${conf.toLowerCase()}.apk',
-+      binaryPath: 'android/app/build/outputs/apk/${conf.toLowerCase()}/app-${conf.toLowerCase()}.apk',
--      build: 'cd android && ./gradlew assemble${conf} assembleAndroidTest -DtestBuildType=${conf.toLowerCase()}'
-+      build: 'cd android && ./gradlew assemble${conf} assembleAndroidTest -DtestBuildType=${conf.toLowerCase()}'
-     },
-            `}/>
-        <div>
-            Pay attention to `-DtestBuildType`, set either to `debug` or `release` according to the main APK type.
-        </div>
+        <PrepareAppConfigsAndroid />
     </TabItem>
 </Tabs>
 
 ## Step 2: Device configs
 
-Blabla
+By default, Detox config suggests default device types for iOS and Android:
+
+```javascript
+module.exports = {
+  // ...
+  devices: {
+    simulator: {
+      type: 'ios.simulator',
+      device: {
+        // highlight-next-line
+        type: 'iPhone 12',
+      },
+    },
+    attached: {
+      type: 'android.attached',
+      device: {
+        // highlight-next-line
+        adbName: '.*', // any attached device
+      },
+    },
+    emulator: {
+      type: 'android.emulator',
+      device: {
+        // highlight-next-line
+        avdName: 'Pixel_3a_API_30_x86',
+      },
+    },
+  },
+};
+```
+
+Here's how you can check they are correct and change them if you need something else:
+
+<Tabs groupId="mobileOs">
+    <TabItem value="iOS" label="iOS">
+        <PrepareDeviceConfigsIos />
+    </TabItem>
+    <TabItem value="Android" label="Android" default>
+        <PrepareDeviceConfigsAndroid />
+    </TabItem>
+</Tabs>
 
 ## Step 3: Android configuration
 
+This is a long and challenging section to complete, so have patience before you start it.
+
+If you don't need to run tests on Android,
+you can jump ahead to [Step 4: Build Your App](#step-4-build-your-app) for iOS.
+
 ### 1. Add the Native Detox dependency
 
-> **Starting Detox 12.5.0, Detox is shipped as a precompiled `.aar`.**
-> To configure Detox as a _compiling dependency_, nevertheless -- refer to the _Setting Detox up as a compiling dependency_ section at the bottom.
+:::info
+
+If, for some reason, you wish to configure Detox as a _compiling dependency_, refer to
+_Setting Detox up as a compiling dependency_ guide. This tutorial assumes you'll be using
+Detox as a precompiled `.aar`, which is the recommended way.
+
+:::
 
 In your _root_ `buildscript` (i.e. `android/build.gradle`), register both `google()` _and_ detox as repository lookup points in all projects:
 
-```groovy
-// Note: add the 'allproject' section if it doesn’t exist
+```groovy title="android/build.gradle"
+// Note: add the 'allprojects' section if it doesn’t exist
 allprojects {
     repositories {
         // ...
@@ -287,7 +314,7 @@ _Jests' [global-setup](https://jestjs.io/docs/en/configuration#globalsetup-strin
 
 b. (Discouraged) Add it to your source control (e.g. git), as part of the repository.
 
-## Step 4: Build Your App and Run Detox Tests
+## Step 4: Build Your App
 
 ### 1. Build Your App
 

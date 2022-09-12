@@ -67,6 +67,7 @@ function createDetoxConfig() {
   );
 }
 
+/** @returns {Detox.DetoxConfig} */
 function createDefaultConfigurations() {
   return {
     testRunner: {
@@ -107,6 +108,12 @@ function createDefaultConfigurations() {
           type: 'iPhone 12',
         },
       },
+      attached: {
+        type: 'android.attached',
+        device: {
+          adbName: '.*',
+        },
+      },
       emulator: {
         type: 'android.emulator',
         device: {
@@ -122,6 +129,14 @@ function createDefaultConfigurations() {
       'ios.sim.release': {
         device: 'simulator',
         app: 'ios.release',
+      },
+      'android.att.debug': {
+        device: 'attached',
+        app: 'android.debug',
+      },
+      'android.att.release': {
+        device: 'attached',
+        app: 'android.release',
       },
       'android.emu.debug': {
         device: 'emulator',

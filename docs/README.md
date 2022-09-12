@@ -3,7 +3,7 @@
 ### Introduction
 
 - [Getting Started](Introduction.GettingStarted.mdx)
-- [Building with Detox](Introduction.BuildingWithDetox.mdx)
+- [Building for Detox](Introduction.BuildingWithDetox.mdx)
 - [Writing Your First Test](Introduction.WritingFirstTest.md)
 - [How Detox Works](Introduction.HowDetoxWorks.md)
 - [Detox Design Principles](Introduction.DesignPrinciples.md)
