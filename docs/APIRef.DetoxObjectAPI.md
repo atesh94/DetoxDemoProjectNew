@@ -1,11 +1,10 @@
 ---
 id: detox-object-api
 slug: api/detox-object-api
-title: Detox Object API
-sidebar_label: The `detox` Object
+sidebar_label: Logger API
 ---
 
-## The `detox` Object
+# Logger API
 
 TODO: rewrite this document
 
@@ -26,7 +25,7 @@ Example:
 it('Verify sanity things', async () => {
   // Instead of this typical direct call:
   // await element(by.id('sanityButton')).tap()
-  
+
   // Use traceCall() as a wrapper:
   await detox.traceCall('Navigate to sanity', () =>
     element(by.id('sanityButton')).tap());
@@ -51,9 +50,9 @@ it('Verify sanity things', async () => {
     detox.trace.startSection('Turn off notifications');
     await element(by.id('gotoNotifications')).tap();
     await element(by.id('notificationsToggle')).tap();
-    await device.pressBack();    
+    await device.pressBack();
   } finally {
-    detox.trace.endSection('Turn off notifications');    
+    detox.trace.endSection('Turn off notifications');
   }
 });
 ```

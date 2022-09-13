@@ -10,21 +10,22 @@ import PrepareAppConfigsIos from './Introduction.BuildingWithDetox.AppConfigs.iO
 import PrepareAppConfigsAndroid from './Introduction.BuildingWithDetox.AppConfigs.Android.mdx';
 import PrepareDeviceConfigsIos from './Introduction.BuildingWithDetox.DeviceConfigs.iOS.mdx';
 import PrepareDeviceConfigsAndroid from './Introduction.BuildingWithDetox.DeviceConfigs.Android.mdx';
+import DetoxBuild from './Introduction.BuildingWithDetox.DetoxBuild.mdx';
 
-# Building for Detox
+# Building with Detox
 
 :::info
 
-This article targets standard or just-generated React Native projects.
-If some steps don't look applicable to your project, please adapt them accordingly
-or skip, relying on the common sense.
+This article mainly covers standard React Native projects.
+If some steps don't look applicable to your project, please adapt them accordingly, relying on the common sense –
+look for other file locations, use custom build commands and so on.
 
 :::
 
 After Detox generated these files in your project's root, you still have some work to do with them:
 
-* `.detoxrc.js` – Detox' own configuration file;
-* `e2e/jest.config.js` – test runner configuration;
+* `.detoxrc.js` – Detox config file;
+* `e2e/jest.config.js` – Jest configuration;
 * `e2e/starter.test.js` – dummy first test.
 
 ## Step 1: App configs
@@ -46,7 +47,8 @@ actually starting the tests.
 
 By default, Detox config suggests default device types for iOS and Android:
 
-```javascript
+```javascript title=".detoxrc.js"
+/** @type {Detox.DetoxConfig} */
 module.exports = {
   // ...
   devices: {
@@ -88,104 +90,195 @@ Here's how you can check they are correct and change them if you need something 
 
 ## Step 3: Android configuration
 
-This is a long and challenging section to complete, so have patience before you start it.
+:::tip
 
-If you don't need to run tests on Android,
-you can jump ahead to [Step 4: Build Your App](#step-4-build-your-app) for iOS.
-
-### 1. Add the Native Detox dependency
-
-:::info
-
-If, for some reason, you wish to configure Detox as a _compiling dependency_, refer to
-_Setting Detox up as a compiling dependency_ guide. This tutorial assumes you'll be using
-Detox as a precompiled `.aar`, which is the recommended way.
+If you want to try out your tests right away on iOS,
+you can skip to [Step 4: Build Your App](#step-4-build-your-app)
+and revisit it when you're ready to move forward with Android.
 
 :::
 
-In your _root_ `buildscript` (i.e. `android/build.gradle`), register both `google()` _and_ detox as repository lookup points in all projects:
+Assuming you have a regular React Native project, these are the files you normally would need to
+patch or create if they are missing:
 
-```groovy title="android/build.gradle"
-// Note: add the 'allprojects' section if it doesn’t exist
-allprojects {
-    repositories {
-        // ...
-        google()
-        maven {
-            // All of Detox' artifacts are provided via the npm module
-            url "$rootDir/../node_modules/detox/Detox-android"
-        }
+* **Build scripts:**
+    * `android/build.gradle`
+    * `android/app/build.gradle`
+* **Native test code:**
+    * `android/app/src/androidTest/java/com/<your.package>/DetoxTest.java`
+* **Manifests:**
+    * `android/app/src/main/AndroidManifest.xml`
+    * `android/app/src/main/res/xml/network_security_config.xml`
+
+### 3.1. Patching build scripts
+
+Open your main build script and apply the suggested changes:
+
+```diff title="android/build.gradle"
+ buildscript {
+   ext {
+     buildToolsVersion = "31.0.0"
+// highlight-next-line
+     minSdkVersion = 21 // (1)
+     compileSdkVersion = 30
+     targetSdkVersion = 30
+// highlight-next-line
++    kotlinVersion = 'X.Y.Z' // (2)
+   }
+ …
+   dependencies {
+     classpath("com.android.tools.build:gradle:7.1.1")
+     classpath("com.facebook.react:react-native-gradle-plugin")
+     classpath("de.undercouch:gradle-download-task:5.0.1")
+// highlight-next-line
++    classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion") // (3)
+ …
+
+ allprojects {
+   repositories {
+   …
+   google()
+// highlight-start
++  maven { // (4)
++    url("$rootDir/../node_modules/detox/Detox-android")
++  }
+// highlight-end
+   maven { url 'https://www.jitpack.io' }
+ }
+```
+
+Here is the explanation of those changes, numbered 1-4:
+
+1. Make sure your `minSdkVersion` is at least 18 or higher.
+1. We recommend you to define a global `kotlinVersion` constant you would use in the next step.
+Replace `X.Y.Z` with the actual version number.
+To get one, open **Android Studio**, go to `Preferences > Languages & Frameworks > Kotlin` and
+look at `Current Kotlin plugin version` field. For example, `211-1.5.30-release-408-AS7442.40`
+means you have version `1.5.30`.
+    ![](img/android/get-kotlin-version.png)
+1. The line adds [Kotlin Gradle plugin](https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-gradle-plugin)
+to the build script. If your project is not entirely new, there's a chance you might have it already, so make sure
+you aren't adding it twice. :wink:
+1. Last, we are adding Detox as a precompiled native dependency, `.aar`. If you need to have Detox as a
+_compiling dependency_ instead, consult the respective section in [Debugging in Android Studio During Detox Tests](Guide.DebuggingInAndroidStudio.md#todo-the-section) guide.
+
+Now let's move on to the next build script and prepare it:
+
+```diff title="android/app/build.gradle"
+ …
+
+ android {
+   …
+   defaultConfig {
+     …
+     versionCode 1
+     versionName "1.0"
++    testBuildType System.getProperty('testBuildType', 'debug')
++    testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+   …
+   buildTypes {
+     release {
+       minifyEnabled true
+       proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
++      proguardFile "${project(':detox').projectDir}/proguard-rules-app.pro"
+
+       signingConfig signingConfigs.release
+     }
+   }
+   …
+
+ dependencies {
++  androidTestImplementation('com.wix:detox:+')
++  implementation 'androidx.appcompat:appcompat:1.1.0'
+   implementation fileTree(dir: "libs", include: ["*.jar"])
+```
+
+:::info ProGuard notice
+
+Detox relies on
+[Android Reflection API](https://developer.android.com/reference/java/lang/reflect/package-summary)
+to integrate with React Native on Android, that's why you have to exempt some of its native code from
+[ProGuard minification](https://developer.android.com/studio/build/shrink-code).
+Otherwise, you'll be seeing Detox crashing or hanging up infinitely upon an attempt to
+run tests with your app built in **release mode**.
+
+:::
+
+### 3.2. Adding an auxiliary Android test
+
+Detox requires from your project to have a single dummy native Android test with some special content,
+which will be picked up by `testRunner` that you just added in the previous step, so let's create it now.
+
+Copy the snippet below to create a file under the following path (where `<your.package>` is your actual
+package name):
+
+```typescript title="android/app/src/androidTest/java/com/<your.package>/DetoxTest.java" showLineNumbers
+// highlight-next-line
+package com.<your.package>; // (1)
+
+import com.wix.detox.Detox;
+import com.wix.detox.config.DetoxConfig;
+
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.LargeTest;
+import androidx.test.rule.ActivityTestRule;
+
+@RunWith(AndroidJUnit4.class)
+@LargeTest
+public class DetoxTest {
+    @Rule // (2)
+// highlight-next-line
+    public ActivityTestRule<MainActivity> mActivityRule = new ActivityTestRule<>(MainActivity.class, false, false);
+
+    @Test
+    public void runDetoxTests() {
+        DetoxConfig detoxConfig = new DetoxConfig();
+        detoxConfig.idlePolicyConfig.masterTimeoutSec = 90;
+        detoxConfig.idlePolicyConfig.idleResourceTimeoutSec = 60;
+        detoxConfig.rnContextLoadTimeoutSec = (BuildConfig.DEBUG ? 180 : 60);
+
+        Detox.runTests(mActivityRule, detoxConfig);
     }
 }
 ```
 
-In your app’s `buildscript` (i.e. `android/app/build.gradle`) add this in `dependencies` section:
+You can see there are two lines (1 and 18) that require extra care:
 
-```groovy
-dependencies {
-    // ...
+1. Replace with your package name. To look it up, you could copy and paste the first line from `android/app/src/main/java/com/<your.package>/MainActivity.java`.
+1. Usually not the case, but you might have a custom activity name instead of a default `MainActivity`. To check whether it is so or not, open your `android/app/src/main/AndroidManifest.xml`,
+and look up how your main activity is called:
+
+```plain text
+…
+  <activity
+// highlight-next-line
+    android:name=".MainActivity"
+    android:label="@string/app_name"
+    android:launchMode="standard"
 ```
 
-also ensure that this line appears in `dependencies`:
+### 3.3. Enabling unencrypted traffic for Detox
 
-```groovy
-dependencies {
-    // ...
-    implementation 'androidx.appcompat:appcompat:1.1.0' // (check what the latest version is!)
-}
-```
+:::info
 
-... and add this to the `defaultConfig` subsection:
+For Detox to work, its native code running on Android device has to be able to connect to the Node.js host running tests.
+It sends an unencrypted HTTP traffic via virtual `localhost` interface, that's why you need to create a new file which
+adds a couple of exceptions to the security rules.
 
-```groovy
-android {
-  // ...
+If properly configured, this approach in no way compromises the security settings of your app.
+For more details, refer to [Android’s security-config guide](https://developer.android.com/training/articles/security-config)
+and the [dedicated article](https://android-developers.googleblog.com/2016/04/protecting-against-unintentional.html)
+in the Android developers blog.
 
-  defaultConfig {
-      // ...
-      testBuildType System.getProperty('testBuildType', 'debug')  // This will later be used to control the test apk build type
-      testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
-  }
-}
-```
+:::
 
-Please be aware that the `minSdkVersion` needs to be at least 18.
+Create a new network security config file for Android (or patch it if you have one):
 
-### 4. Add Kotlin
-
-If your project does not already support Kotlin, add the Kotlin Gradle-plugin to your `classpath` in the root build-script (i.e.`android/build.gradle`):
-
-```groovy
-buildscript {
-    // ...
-    ext.kotlinVersion = '1.3.0' // (check what the latest version is!)
-    dependencies {
-        // ...
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
-    }
-}
-```
-
-_Note: most guides advise of defining a global `kotlinVersion` constant - as in this example, but that is not mandatory._
-
-_**Note that Detox has been tested for version 1.1.0 of Kotlin, and higher!**_
-
-### 5. Create a Detox-Test Class
-
-Detox requires a dummy implementation of a single Android-native test.
-
-1. Add a new file to your project, under this path and name: `android/app/src/androidTest/java/com/[your.package]/DetoxTest.java`. **Double-check that the path is correct!**
-1. Copy & paste the content of the equivalent file from [the detox example app for RN](https://github.com/wix/Detox/tree/master/examples/demo-react-native/android/app/src/androidTest/java/com/example/DetoxTest.java), into it. **Don’t forget to change the package name to your project’s package name!**
-
-### 6. Enable clear-text (unencrypted) traffic for Detox
-
-Starting from Android SDK API level 28, Google have disabled all clear-text network traffic by default. Namely, unless explicitly configured, all of your application’s outgoing unencrypted traffic (i.e. non-TLS using HTTP rather than HTTPS) is blocked by the device.
-
-For Detox to work, Detox test code running on the device must connect to the test-running host through its virtual localhost interface<sup>(\*)</sup> using simple HTTP traffic. Therefore, the following network-security exemption configuration must be applied --
-
-_In an XML resource file, e.g. `android/app/src/main/res/xml/network_security_config.xml`:_
-
-```xml
+```xml title="android/app/src/main/res/xml/network_security_config.xml"
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
     <domain-config cleartextTrafficPermitted="true">
@@ -195,201 +288,32 @@ _In an XML resource file, e.g. `android/app/src/main/res/xml/network_security_co
 </network-security-config>
 ```
 
-_In the app’s `AndroidManifest.xml`_
+If you had no network security config before, it means you also have to register it after creation:
 
-```xml
-<manifest>
-  <application
-        ...
-        android:networkSecurityConfig="@xml/network_security_config">
-  </application>
-</manifest>
+```diff title="android/app/src/main/AndroidManifest.xml"
+ <manifest>
+   <application
+   …
++    android:networkSecurityConfig="@xml/network_security_config">
+   </application>
+ </manifest>
 ```
 
-> _Refer to the [Detox example app](https://github.com/wix/Detox/tree/master/examples/demo-react-native/android/app/src/main) for an example on how this is effectively implemented._
-
-**Note: if properly configured, this in no way compromises the security settings of your app.**
-
-For full details, refer to [Android’s security-config guide](https://developer.android.com/training/articles/security-config), and the dedicated article in the [Android developers blog](https://android-developers.googleblog.com/2016/04/protecting-against-unintentional.html).
-
-> _(\*) 10.0.2.2 for Google emulators, 10.0.3.2 for Genymotion emulators._
-
-### 7. ProGuard (Minification, Obfuscation)
-
-In apps running [minification using ProGuard](https://developer.android.com/studio/build/shrink-code), in order for Detox to work well on release builds, please enable some Detox ProGuard configuration rules by applying the custom configuration file on top of your own. Typically, this is defined using the `proguardFiles` statement in the minification-enabled build-type in your `app/build.gradle`:
-
-```groovy
-    buildTypes {
-        // 'release' is typically the default proguard-enabled build-type
-        release {
-            minifyEnabled true
-
-            // Typical pro-guard definitions
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            // Detox-specific additions to pro-guard
-            proguardFile "${rootProject.projectDir}/../node_modules/detox/android/detox/proguard-rules-app.pro"
-        }
-    }
-
-```
-
-:warning: **Note:** In order for Detox to be able to work properly, in `proguard-rules-app.pro`, it effectively declares rules that retain most of React-Native’s code (i.e. keep it unminified, unobfuscated) in your **production** APK. Though generally speaking, this should not be an issue (as React-Native is an open-source project), there are ways around that, if it bothers you. For example, running your E2E over a build-type specifically designed to run E2E tests using Detox would do the trick -- roughly, like so (in `app/build.gradle`):
-
-```groovy
-    buildTypes {
-        release {
-            minifyEnabled true
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-
-            signingConfig signingConfigs.release
-        }
-        releaseE2E {
-            initWith release
-            setMatchingFallbacks('release')
-
-            proguardFile "${rootProject.projectDir}/../node_modules/detox/android/detox/proguard-rules-app.pro"
-        }
-    }
-```
-
-Here we utilize Gradle’s `initWith` to easily define `releaseE2E` in a way that is identical to the `release` build-type, with the exception of considering Detox' `proguard-rules-app.pro` in the minification process.
-
-Following the example, you would then have to build your app using `gradlew assembleReleaseE2E` rather than `gradlew assembleRelease` before running Detox, and instruct Detox (i.e. via `binaryPath` in the Detox configuration file) to use the APK resulted specifically by _that_ Gradle target (e.g. in `app/build/apk/releaseE2E/app-releaseE2E.apk` instead of the equivalent `app/build/apk/release/app-release.apk`).
-
-> Note: if your app contains flavors -- that makes things a bit trickier, but the approach can generally be adjusted to support that as well.
-
-**Last but not least:** If you’re having issue with Detox' ProGuard rules, please report them [here](https://github.com/wix/Detox/issues/new/choose).
-A special thanks to [@GEllickson-Hover](https://github.com/GEllickson-Hover) for reporting issues related to obfuscation in [#2431](https://github.com/wix/Detox/issues/2431).
-
-### 8. Test Butler Support (Optional)
-
-If, when [setting up your work environment](Introduction.AndroidDevEnv.md), you’ve selected Google emulators with an AOSP image as the test target - as recommended,
-**we strongly encourage** you would also integrate [Test Butler](https://github.com/linkedin/test-butler): in the very least - in order to suppress crash and ANR dialogs.
-They are a soft spot in UI testing on Android, all around, as - when displayed,they make the UI entirely inaccessible (and thus cause tests to fail in bulks).
-
-Setting Test Butler up for working with Detox is a bit different than explained in their guides. The process, as a whole, is twofold:
-
-1. Preinstalling the test-butler-app APK onto the test device.
-1. Integrating the test-butler-lib into your own test APK, and initializing it in a custom test runner (as explained).
-
-The library part can be easily achieved as explained there (i.e. by using Gradle’s `androidTestImplementation`). Same goes for initialization. As for the APK, the suggested usage of Gradle’s `androidTestUtil` is scarce when running with Detox (i.e. non-native instrumentation tests). Here’s what to do instead.
-
-> _For a complete and thorough coverage of the Test Butler integration with Detox, consider going over our [blogpost on CI execution](https://medium.com/wix-engineering/how-to-execute-android-ui-tests-on-ci-and-stay-alive-eb9089d88c1f) on medium_.
-
-#### Solution 1: Prebaked Images
-
-If you have control over the emulators' snapshots, simply download (see test-butler’s guide) and install the test-butler APK once (e.g. use `adb install -r -t path/to/test-butler-app.apk`), and save an updated version of the snapshot. This is the best solution.
-
-> Note: you will have to reiterate this if you upgrade to a newer version of Test-Butler, in the future.
-
-#### Solution 2: Dynamic Installation
-
-Assuming you have the APK available in the system, you can dynamically have Detox automatically install it in all of the running target-emulators by utilizing `utilBinaryPaths` in your Detox configuration. Example:
-
-```json
-{
-  "devices": {
-    "emulator.oss": {
-      "type": "android.emulator",
-      "device": "...",
-      "utilBinaryPaths": ["relative/path/to/test-butler-app-2.2.1.apk"],
-    }
-  }
-}
-```
-
-> Refer to our [configuration guide](APIRef.Configuration.md) for further details on `utilBinaryPaths`.
-
-As per _making_ the APK available - for that, we have no really good solution, for the time being (but it’s in the works). A few options might be:
-
-a. In a custom script, have it predownloaded from Maven directly, as suggested in the Test Butler guide. For example (on a Mac / Linux):
-
-```sh
-curl -f -o ./temp/test-butler-app.apk https://repo1.maven.org/maven2/com/linkedin/testbutler/test-butler-app/2.2.1/test-butler-app-2.2.1.apk
-```
-
-_Jests' [global-setup](https://jestjs.io/docs/en/configuration#globalsetup-string) is a recommend place for those kinds of things._
-
-> Should you decide to go this path, we recommend you add `./temp/test-butler-app.apk` to the relevant `.gitignore`.
-
-b. (Discouraged) Add it to your source control (e.g. git), as part of the repository.
+:trophy: Pat yourself on the back! The hardest part is over, now your Android app is ready to be used with Detox.
 
 ## Step 4: Build Your App
 
-### 1. Build Your App
-
-Use a convenience method in Detox command line tools to build your project easily:
-
-```sh
-detox build --configuration <your configuration name>
-```
-
-> **Note:** Detox executes the build command you specified in your Detox configuration. If your build fails, make sure to provide the correct build command.
-
-### 2. Start React Native packager
-
-Assuming you are testing a React Native app, before you run Detox tests,
-you need to make sure the packager is running in parallel:
-
-```bash
-npx react-native start
-
-#                        #######
-#                   ################
-#                #########     #########
-#            #########             ##########
-#        #########        ######        #########
-#       ##########################################
-#      #####      #####################       #####
-#      #####          ##############          #####
-#      #####    ###       ######       ###    #####
-#      #####    #######            #######    #####
-#      #####    ###########    ###########    #####
-#      #####    ##########################    #####
-#      #####    ##########################    #####
-#      #####      ######################     ######
-#       ######        #############        #######
-#         #########        ####       #########
-#              #########          #########
-#                  ######### #########
-#                       #########
-#
-#
-#                    Welcome to Metro!
-#              Fast - Scalable - Integrated
-```
-
-### 3. Run the Tests
-
-Use the Detox command line tools to test your project easily:
-
-```sh
-detox test --configuration <your configuration name>
-```
-
-That’s it. Your first failing Detox test is running!
-
-```plain text
-● Example › should have welcome screen
-
-  Test Failed: No elements found for “MATCHER(id == “welcome”)”
-
-  HINT: To print view hierarchy on failed actions/matches, use log-level verbose or higher.
-
-     9 |
-    10 |   it('should have welcome screen', async () => {
-  > 11 |     await expect(element(by.id('welcome'))).toBeVisible();
-       |                                             ^
-    12 |   });
-    13 |
-    14 |   it('should show hello screen after tap', async () => {
-
-    at Object.toBeVisible (test/e2e/starter.test.js:11:45)
-```
-
-Next, we’ll go over usage and how to make this test [actually pass](Introduction.WritingFirstTest.md).
-
-## Troubleshooting
-
-Please refer to [troubleshooting guide about build issues](Troubleshooting.BuildingTheApp.md#android) for assistance.
-
+<Tabs groupId="configurationName">
+  <TabItem value="ios.sim.debug" label="iOS (Debug)">
+    <DetoxBuild configurationName={'ios.sim.debug'} debug />
+  </TabItem>
+  <TabItem value="ios.sim.release" label="iOS (Release)">
+    <DetoxBuild configurationName={'ios.sim.release'} />
+  </TabItem>
+  <TabItem value="android.emu.debug" label="Android (Debug)">
+    <DetoxBuild configurationName={'android.emu.debug'}  debug/>
+  </TabItem>
+  <TabItem value="android.emu.release" label="Android (Release)">
+    <DetoxBuild configurationName={'android.emu.release'} />
+  </TabItem>
+</Tabs>

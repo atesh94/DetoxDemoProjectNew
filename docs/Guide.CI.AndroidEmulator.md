@@ -7,13 +7,13 @@ sidebar_label: Setting Up an Android Development & Testing Environment
 
 ## Setting Up an Android Development & Testing Environment
 
-This guide provides some core practices to follow in setting up a stable, reliable environment for running automated UI tests using Android emulators (using Detox, in particular) -- be it on a personal, _local_ computer, or a powerful CI machine.
+This guide provides some core practices to follow in setting up a stable, reliable environment for running automated UI tests using Android emulators (using Detox, in particular) – be it on a personal, _local_ computer, or a powerful CI machine.
 
 Note that running automated UI tests is _not the same_ as developing Android apps. Hence, you may find yourself not 100% aligned with the recommendations here, and should consider being so.
 
 ## Java Setup
 
-This is the most basic step in the process, as without a proper Java SDK installed, nothing Android-ish works -- at least not from command-line, which is mandatory for executing `Detox`.
+This is the most basic step in the process, as without a proper Java SDK installed, nothing Android-ish works – at least not from command-line, which is mandatory for executing `Detox`.
 
 _The bottom line is that **Android needs Java installed**. If you want to run with React Native 66 and Android 12 then it needs to be at least Java 11, otherwise you should have Java 8._
 
@@ -56,7 +56,7 @@ If otherwise the version is simply wrong, try these course of actions:
 
 ## Android SDK
 
-If you have Android Studio installed - as most of us do, then the SDK should be available for you somewhere on your machine<sup>\*</sup>. However, for CI agents -- possibly running with no GUI, or if you simply don’t want the somewhat bloated piece of software on your computer, it is possible to simply download the SDK and tool-set, purely. Both cases are covered in Google’s [Android guide about Android Studio](https://developer.android.com/studio/). For the pure-tools option, refer to the `Command line tools only` section at the bottom.
+If you have Android Studio installed - as most of us do, then the SDK should be available for you somewhere on your machine<sup>\*</sup>. However, for CI agents – possibly running with no GUI, or if you simply don’t want the somewhat bloated piece of software on your computer, it is possible to simply download the SDK and tool-set, purely. Both cases are covered in Google’s [Android guide about Android Studio](https://developer.android.com/studio/). For the pure-tools option, refer to the `Command line tools only` section at the bottom.
 
 For more help on setting the SDK up, [this guide might be helpful](https://www.androidcentral.com/installing-android-sdk-windows-mac-and-linux-tutorial).
 
@@ -148,14 +148,14 @@ This is something that we actually recommend applying in the emulator itself rat
 In any case, the general principle we’re going to instruct is as follows:
 
 1. Enable auto-save for an installed / running emulator.
-1. Launch it, and, when stable, terminate -- a snapshot is saved as a result.
+1. Launch it, and, when stable, terminate – a snapshot is saved as a result.
 1. Disable auto-save, so that future, test-tainted snapshots won’t be saved.
 
 ### Setting up a quick-boot snapshot from the Emulator
 
 Start by launching a freshly baked emulator. Wait for it to go stable.
 
-When running, go to settings (3 dots in the sidebar) > `Snapshots` > `Settings` tab. If not already set, select `Yes` in the `auto-save` option. This should prompt for a restart -- choose `Yes`. The emulator should restart **and save a snapshot.**
+When running, go to settings (3 dots in the sidebar) > `Snapshots` > `Settings` tab. If not already set, select `Yes` in the `auto-save` option. This should prompt for a restart – choose `Yes`. The emulator should restart **and save a snapshot.**
 
 <img src="img/android/snapshot-autosave.png" alt="Emulator auto-save menu" />
 
@@ -195,6 +195,59 @@ This is a bit more difficult, but is also applicable even for UI-less machines.
    ```ini
    saveOnExit = false
    ```
+
+### Test Butler Support (Optional)
+
+If, when [setting up your work environment](Introduction.AndroidDevEnv.md), you’ve selected Google emulators with an AOSP image as the test target - as recommended,
+**we strongly encourage** you would also integrate [Test Butler](https://github.com/linkedin/test-butler): in the very least - in order to suppress crash and ANR dialogs.
+They are a soft spot in UI testing on Android, all around, as - when displayed,they make the UI entirely inaccessible (and thus cause tests to fail in bulks).
+
+Setting Test Butler up for working with Detox is a bit different than explained in their guides. The process, as a whole, is twofold:
+
+1. Preinstalling the test-butler-app APK onto the test device.
+1. Integrating the test-butler-lib into your own test APK, and initializing it in a custom test runner (as explained).
+
+The library part can be easily achieved as explained there (i.e. by using Gradle’s `androidTestImplementation`). Same goes for initialization. As for the APK, the suggested usage of Gradle’s `androidTestUtil` is scarce when running with Detox (i.e. non-native instrumentation tests). Here’s what to do instead.
+
+> _For a complete and thorough coverage of the Test Butler integration with Detox, consider going over our [blogpost on CI execution](https://medium.com/wix-engineering/how-to-execute-android-ui-tests-on-ci-and-stay-alive-eb9089d88c1f) on medium_.
+
+#### Solution 1: Prebaked Images
+
+If you have control over the emulators' snapshots, simply download (see test-butler’s guide) and install the test-butler APK once (e.g. use `adb install -r -t path/to/test-butler-app.apk`), and save an updated version of the snapshot. This is the best solution.
+
+> Note: you will have to reiterate this if you upgrade to a newer version of Test-Butler, in the future.
+
+#### Solution 2: Dynamic Installation
+
+Assuming you have the APK available in the system, you can dynamically have Detox automatically install it in all of the running target-emulators by utilizing `utilBinaryPaths` in your Detox configuration. Example:
+
+```json
+{
+  "devices": {
+    "emulator.oss": {
+      "type": "android.emulator",
+      "device": "...",
+      "utilBinaryPaths": ["relative/path/to/test-butler-app-2.2.1.apk"],
+    }
+  }
+}
+```
+
+> Refer to our [configuration guide](APIRef.Configuration.md) for further details on `utilBinaryPaths`.
+
+As per _making_ the APK available - for that, we have no really good solution, for the time being (but it’s in the works). A few options might be:
+
+a. In a custom script, have it predownloaded from Maven directly, as suggested in the Test Butler guide. For example (on a Mac / Linux):
+
+```sh
+curl -f -o ./temp/test-butler-app.apk https://repo1.maven.org/maven2/com/linkedin/testbutler/test-butler-app/2.2.1/test-butler-app-2.2.1.apk
+```
+
+_Jests' [global-setup](https://jestjs.io/docs/en/configuration#globalsetup-string) is a recommend place for those kinds of things._
+
+> Should you decide to go this path, we recommend you add `./temp/test-butler-app.apk` to the relevant `.gitignore`.
+
+b. (Discouraged) Add it to your source control (e.g. git), as part of the repository.
 
 ### Disclaimer
 

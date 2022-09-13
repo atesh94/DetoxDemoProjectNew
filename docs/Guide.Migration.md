@@ -49,7 +49,7 @@ The core of the change is that Detox' drivers framework is **no longer a single 
 
 > You can find a visual explanation, [here](https://github.com/wix/Detox/files/7338121/pre-multiapps-rfc.pdf).
 
-In addition, the runtime driver is no longer state-less -- basically, allowing implementation to hold any state that is required in identifying and managing the associated device.
+In addition, the runtime driver is no longer state-less – basically, allowing implementation to hold any state that is required in identifying and managing the associated device.
 
 ##### How to migrate
 

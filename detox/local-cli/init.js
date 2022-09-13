@@ -60,7 +60,7 @@ function createJestFolderE2E() {
 
 function createDetoxConfig() {
   createFile('.detoxrc.js',
-    '/** @type {import("detox").DetoxConfig} */\n' +
+    '/** @type {Detox.DetoxConfig} */\n' +
     'module.exports = ' +
     util.inspect(createDefaultConfigurations(), { compact: false, depth: Infinity }) +
     ';\n'

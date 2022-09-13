@@ -61,7 +61,7 @@ If you don't see that AVD name, you might use another one from the list – just
 If the output is completely blank, then you need to open Android Studio and [create a new virtual device (AVD)](https://developer.android.com/studio/run/managing-avds#createavd)
 first. Experienced users might do that via [`avdmanager`](https://developer.android.com/studio/command-line/avdmanager), if Android Studio is not installed (e.g. on CI).
 
-:::tip
+:::info
 
 If you wish to use an attached Android device (via USB or wireless network), make sure it is available:
 
@@ -78,4 +78,8 @@ List of devices attached
 
 Assuming the device is available (troubleshooting _adb_ issues is out of scope of this tutorial), you just
 need to use `android.att.*` Detox configurations instead of `android.emu.*` where required.
+
+:warning: If you have multiple devices connected, replace that loose regular expression (`adbName: '.*'`)
+in your Detox config with a specific device name.
+
 :::

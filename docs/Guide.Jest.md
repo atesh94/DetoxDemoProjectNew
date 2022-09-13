@@ -120,39 +120,6 @@ A typical `jest-circus` configuration in `e2e/config.json` file would look like:
 }
 ```
 
-##### `e2e/environment.js`
-
-If you are not familiar with Environment concept in Jest, you could check [their documentation](https://jestjs.io/docs/en/configuration#testenvironment-string).
-
-For Detox, having a `CustomDetoxEnvironment` class derived from `NodeEnvironment` enables implementing cross-cutting concerns such as taking screenshots the exact moment a test function (it/test) or a hook (e.g., beforeEach) fails, skip adding tests if they have `:ios:` or `:android:` within their title, starting device log recordings before test starts and so on.
-
-API of `CustomDetoxEnvironment` is not entirely public in a sense that there’s no guide on how to write custom `DetoxCircusListeners` and override `initDetox()` and `cleanupDetox()` protected methods, since this is not likely to be needed for typical projects, but this is under consideration if there appears specific demand. You may want to check out this [simple example](https://github.com/wix/Detox/pull/2009#issuecomment-648971528) of overriding `initDetox()`, or some [alternative approaches](https://github.com/wix/Detox/pull/2009#issuecomment-649342823) to overriding `initDetox()`.
-
-```js
-const {
-  DetoxCircusEnvironment,
-  SpecReporter,
-  WorkerAssignReporter,
-} = require('detox/runners/jest');
-
-class CustomDetoxEnvironment extends DetoxCircusEnvironment {
-  constructor(config, context) {
-    super(config, context);
-
-    // Can be safely removed, if you are content with the default value (=300000ms)
-    this.initTimeout = 300000;
-
-    // This takes care of generating status logs on a per-spec basis. By default, Jest only reports at file-level.
-    // This is strictly optional.
-    this.registerListeners({
-      SpecReporter,
-      WorkerAssignReporter,
-    });
-  }
-}
-
-module.exports = CustomDetoxEnvironment;
-```
 
 **Notes:**
 
@@ -170,6 +137,7 @@ There are some things you should notice:
 
 - Don’t worry about mocks being used, Detox works on the compiled version of your app.
 - Detox exposes its primitives (`expect`, `device`, ...) globally, it will override Jest’s global `expect` object.
+- use `import jestExpect from 'expect'` if you need.
 
 ### Parallel Test Execution
 

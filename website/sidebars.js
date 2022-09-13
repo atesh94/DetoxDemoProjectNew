@@ -32,16 +32,12 @@ const sidebars = {
       items: [
         'detox-cli',
         'configuration',
-        'detox-object-api',
         'device-object-api',
         'test-lifecycle',
         'matchers',
         'actions-on-element',
         'expect',
-        'launch-args',
-        'mocking-open-with-url',
-        'mocking-user-notifications',
-        'mocking-user-activity',
+        'detox-object-api',
         'artifacts',
         'screenshots'
       ]
@@ -71,6 +67,10 @@ const sidebars = {
         'parallel-test-execution',
         'third-party-drivers',
         'uninstalling',
+        'launch-args',
+        'mocking-open-with-url',
+        'mocking-user-notifications',
+        'mocking-user-activity',
       ]
     },
     {
