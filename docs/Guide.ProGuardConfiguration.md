@@ -47,7 +47,7 @@ it effectively declares rules that retain most of React-Native’s code
 Though generally speaking, this should not be an issue (as React-Native is an open-source project),
 there are ways around that, if it bothers you.
 For example, running your E2E over a build-type specifically designed to run E2E tests using Detox would do the trick
--- roughly, like so (in `app/build.gradle`):
+– roughly, like so (in `app/build.gradle`):
 
 ```groovy
     buildTypes {

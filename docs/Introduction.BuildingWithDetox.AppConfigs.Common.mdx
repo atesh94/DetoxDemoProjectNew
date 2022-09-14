@@ -1,8 +1,0 @@
-<!-- markdownlint-configure-file { "no-trailing-punctuation": 0 } -->
-
-import CodeBlock from '@theme/CodeBlock';
-
-<CodeBlock language="diff" title={props.title}>
-{props.appDiff(props.flavor1 || 'Debug').trimEnd()}
-{props.appDiff(props.flavor2 || 'Release').replace(/^.*$/m, '').trimEnd()}
-</CodeBlock>

@@ -1,6 +1,6 @@
 ---
 id: android-dev-env
-slug: introduction/android-dev-env
+slug: guide/android-dev-env
 title: Setting Up an Android Development & Testing Environment
 sidebar_label: Setting Up an Android Development & Testing Environment
 ---
@@ -19,20 +19,20 @@ _The bottom line is that **Android needs Java installed**. If you want to run wi
 
 To check for your real java-executable’s version, in a command-line console, run:
 
-```sh
+```bash
 java -version
 ```
 
 What needs to be verified is that `java` is in-path and that the output contains something like this:
 
-```sh
+```bash
 java version "11.x.x"
 ...
 ```
 
 or, if you have [openjdk](https://techoral.com/blog/openjdk-developers-guide.html) installed:
 
-```sh
+```bash
 openjdk version "11.0.2" 2019-01-1
 ...
 ```
@@ -77,7 +77,7 @@ Fortunately, the Android team at Google offers a pretty decent alternative: **AO
 
 _Here’s a visual comparison between the two - an SDK 28 (Android 9) AOSP emulator (left) vs. an emulator with Google APIs installed (right):_
 
-<img src="img/android/aosp-vs-googleapi.png" alt="AOSP vs Google-API" />
+![AOSP vs Google-API](img/android/aosp-vs-googleapi.png)
 
 ### Here’s how to install them using the command line
 
@@ -88,13 +88,13 @@ While it’s possible to do this using Android Studio, we’ll focus on the comm
 1. Preliminary: Upgrade your `emulator` executable to the latest version.
    _Note: It is OK if the emulator’s version is not aligned with the SDK or platform-tools' version you currently have installed (e.g. 30.x.x vs. SDK 29)_
 
-   ```sh
+   ```bash
    $ANDROID_HOME/tools/bin/sdkmanager --install emulator
    ```
 
 1. Install an emulator image without Google APIs:
 
-   ```shell
+   ```bash
    $ANDROID_HOME/tools/bin/sdkmanager "system-images;android-28;default;x86_64"
    $ANDROID_HOME/tools/bin/sdkmanager --licenses
    ```
@@ -105,7 +105,7 @@ While it’s possible to do this using Android Studio, we’ll focus on the comm
 
 1. Create an emulator (i.e. AVD - Android Virtual Device):
 
-   ```shell
+   ```bash
    $ANDROID_HOME/tools/bin/avdmanager create avd -n Pixel_API_28_AOSP -d pixel --package "system-images;android-28;default;x86_64"
    ```
 
@@ -141,7 +141,7 @@ Also, be sure to upgrade your emulator executable to the latest version: If it i
 
 If the system allows saving a state (for example, in personal computers or a CI system that can start from prebaked images you can configure), we highly and strongly recommend setting up quick-boot snapshots for any emulator that is used for testing automation.
 
-Quick-boot saves significant time otherwise wasted when emulators cold-boot from scratch. The concept becomes more prominent in environments capable of parallel-executing tests in multiple, concurrently running emulators (as when [Detox is run with multiple Jest workers](Guide.Jest.md)).
+Quick-boot saves significant time otherwise wasted when emulators cold-boot from scratch. The concept becomes more prominent in environments capable of parallel-executing tests in multiple, concurrently running emulators (as when [Detox is run with multiple Jest workers](config/testRunner.md)).
 
 This is something that we actually recommend applying in the emulator itself rather than using command-line, but we’ll include both options.
 
@@ -157,7 +157,7 @@ Start by launching a freshly baked emulator. Wait for it to go stable.
 
 When running, go to settings (3 dots in the sidebar) > `Snapshots` > `Settings` tab. If not already set, select `Yes` in the `auto-save` option. This should prompt for a restart – choose `Yes`. The emulator should restart **and save a snapshot.**
 
-<img src="img/android/snapshot-autosave.png" alt="Emulator auto-save menu" />
+![Emulator auto-save menu](img/android/snapshot-autosave.png)
 
 Do this again after the emulator is back up, but set `No` in the `auto-save` option. Allow it to restart yet again: it will immediately boot into the state saved as a snapshot earlier.
 
@@ -198,7 +198,7 @@ This is a bit more difficult, but is also applicable even for UI-less machines.
 
 ### Test Butler Support (Optional)
 
-If, when [setting up your work environment](Introduction.AndroidDevEnv.md), you’ve selected Google emulators with an AOSP image as the test target - as recommended,
+If, when setting up your work environment, you’ve selected Google emulators with an AOSP image as the test target - as recommended,
 **we strongly encourage** you would also integrate [Test Butler](https://github.com/linkedin/test-butler): in the very least - in order to suppress crash and ANR dialogs.
 They are a soft spot in UI testing on Android, all around, as - when displayed,they make the UI entirely inaccessible (and thus cause tests to fail in bulks).
 
@@ -233,17 +233,15 @@ Assuming you have the APK available in the system, you can dynamically have Deto
 }
 ```
 
-> Refer to our [configuration guide](APIRef.Configuration.md) for further details on `utilBinaryPaths`.
+> Refer to our [configuration guide](config/apps.md) for further details on `utilBinaryPaths`.
 
 As per _making_ the APK available - for that, we have no really good solution, for the time being (but it’s in the works). A few options might be:
 
 a. In a custom script, have it predownloaded from Maven directly, as suggested in the Test Butler guide. For example (on a Mac / Linux):
 
-```sh
+```bash
 curl -f -o ./temp/test-butler-app.apk https://repo1.maven.org/maven2/com/linkedin/testbutler/test-butler-app/2.2.1/test-butler-app-2.2.1.apk
 ```
-
-_Jests' [global-setup](https://jestjs.io/docs/en/configuration#globalsetup-string) is a recommend place for those kinds of things._
 
 > Should you decide to go this path, we recommend you add `./temp/test-butler-app.apk` to the relevant `.gitignore`.
 
@@ -269,7 +267,7 @@ to name a few.
 
 On Mac machines, the AVD directory typically maps to:
 
-```sh
+```bash
 $HOME/.android/avd/<AVD Name>.avd/
 ```
 
@@ -284,13 +282,13 @@ The path should be similar on Linux machines, even though `$HOME` isn’t `/User
 
 #### Shortcut for booting a verbose, visible emulator in a GUI supporting system
 
-```shell
+```bash
 $ANDROID_HOME/emulator/emulator -verbose @Pixel_API_28_AOSP &
 ```
 
 **Shortcut for booting a verbose, _headless_ emulator in a UI-less Linux system**
 
-```shell
+```bash
 $ANDROID_HOME/emulator/emulator -verbose -no-window -no-audio -gpu swiftshader_indirect @Pixel_API_28_AOSP &
 ```
 

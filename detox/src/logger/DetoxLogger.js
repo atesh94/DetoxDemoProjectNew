@@ -58,7 +58,7 @@ class DetoxLogger {
         overrideConsole: 'none',
         options: {
           showDate: false,
-          showLoggerName: true,
+          showLoggerName: false,
           showProcess: false,
           showPid: false,
           showLevel: false,
